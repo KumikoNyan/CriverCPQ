@@ -11,3 +11,5 @@ A Configure, Price, and Quote (CPQ) system for our client Criver Glass &amp; Alu
 
 ## To Run the Project
 1. ```python manage.py runserver```
+2. If made changes to ```models.py``` make sure to ```python manage.py makemigrations```
+3. Then ```python manage.py migrate```
