@@ -8,3 +8,6 @@ A Configure, Price, and Quote (CPQ) system for our client Criver Glass &amp; Alu
   - ```Django```
 - Optional: [Visual Studio Code](https://code.visualstudio.com/download)
 - Optional: [Github Desktop](https://desktop.github.com/download/)
+
+## To Run the Project
+1. ```python manage.py runserver```
