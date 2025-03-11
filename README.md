@@ -7,3 +7,4 @@ A Configure, Price, and Quote (CPQ) system for our client Criver Glass &amp; Alu
 - Python packages
   - ```Django```
 - Optional: [Visual Studio Code](https://code.visualstudio.com/download)
+- Optional: [Github Desktop](https://desktop.github.com/download/)
