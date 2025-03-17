@@ -1,0 +1,231 @@
+{% load static %}
+
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static '/stylesheet4.css' %}">
+
+    <title>CLEAR</title>
+</head>
+<script src="{% static 'design.js' %}"></script>
+
+<body>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js"
+        integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"
+        integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+    {% block navbar %}
+    <nav class="navbar clear-colors" style="min-height: 75px; display: flexbox; justify-content: space-between;">
+        <div class="row">
+                <img class="logo" src="https://i.imgur.com/RK7hDVV.png">
+                {% block search %}
+                {% endblock %}
+        </div>
+        {% block filter %}
+        {% endblock %}
+    </nav>
+    {% endblock %}
+    <div class="container-fluid" style="height:100%;">
+        <div class="row" style="height:100%">
+            <div class="d-flex flex-column clear-colors col-2" style="height: 100%;">
+                <hr>
+                <div class="nav-item pb-3 profile" style="margin-bottom: 5px;">
+                    <a href="#" class="nav-link text-white">
+                        <p style="margin-bottom: 0;"><b>
+                                {% if user.is_authenticated %}
+                                {{ user.first_name }}
+                                {{user.last_name}}
+                                {% else %}
+                                No Name
+                                {% endif %}
+                            </b></p>
+
+                        </a>
+                </div>
+                <div class="mt-5"> 
+                    <ul style="list-style-type: none; margin-top: 5%; padding: 0;"> 
+                        <li class="nav-item pb-3" style="border-radius: 50px;"> 
+                            <a id="navbars" href="{% url 'dashboard' %}" 
+                                class="nav-link text-white {% if 'dashboard' in request.path %} active {% endif %}"> 
+                                Dashboard 
+                            </a> 
+                        </li> 
+                        <li class="nav-item pb-3"> 
+                            <a id="navbars" href="{% url 'products' %}" 
+                                class="nav-link text-white {% if 'products' in request.path %} active {% endif %}"> 
+                                Products 
+                            </a> 
+                        </li> 
+                        <li class="nav-item pb-3"> 
+                            <a id="navbars" href="{% url 'orders' %}" 
+                                class="nav-link text-white {% if 'orders' in request.path %} active {% endif %}"> 
+                                Job Orders 
+                            </a> 
+                        </li> 
+                        <li class="nav-item pb-3"> 
+                            <a id="navbars" href="{% url 'materials' %}" 
+                                class="nav-link text-white {% if 'materials' in request.path %} active {% endif %}"> 
+                                Materials 
+                            </a> 
+                        </li> 
+                        <li class="nav-item pb-3"> 
+                            <a id="navbars" href="{% url 'stock_in' %}" 
+                                class="nav-link text-white {% if 'stock_in' in request.path %} active {% endif %}"> 
+                                Stock-In
+                            </a> 
+                        </li> 
+                        <li class="nav-item pb-3"> 
+                            <a id="navbars" href="" data-toggle="modal" data-target="#generateReportModal" 
+                                class="nav-link text-white {% if 'reports' in request.path %} active {% endif %}"> 
+                                Reports 
+                            </a> 
+                        </li>
+                        <li class="nav-item pb-3"> 
+                            <a id="navbars" href="{% url 'manage_accounts' %}"
+                                class="nav-link text-white {% if 'manage_accounts' in request.path %} active {% endif %}"> 
+                                Manage Accounts
+                            </a> 
+                        </li>  
+                        <li class="nav-item pb-3"> 
+                            <a id="navbars" href="{% url 'logout' %}"
+                                class="nav-link text-white {% if 'logout' in request.path %} active {% endif %}"> 
+                                Log Out
+                            </a> 
+                        </li>  
+                    </ul> 
+                </div> 
+            </div>
+            <div class="col-10" style="background-color:#EBEBEB;">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="generateReportModal" tabindex="-1" role="dialog" aria-labelledby="generateReportModalLabel">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content"  style="width: 350px;">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generateReportModalLabel">Generate Report</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="POST" action="{% url 'reports' %}"> {% csrf_token %} 
+                    <div class="modal-body ml-4">
+                        <div class="row" style="display: flexbox; align-items: baseline;">
+                            <label for="reptype">Report type</label>
+                            <select class="reptype input-select" name="reptype" style="width: 150px; border-radius: 100px; margin-left: 20px; margin-bottom: 5px;">
+                                <option value="materials">Materials</option>
+                                <option value="production">Production</option>
+                                <option value="pricing">Pricing</option>
+                                <option value="shopping_list">Shopping List</option>
+                            </select>
+                        </div>
+                        <div id="production_input" style="display:none;">
+                            <div class="row form-group" style="display: flexbox; align-items: baseline; margin-top: 10px;">
+                                <label for="startDate">Start Date</label>
+                                <input type="date" name="start_date" class="start_date form-control" style="width: 150px; border-radius: 100px; margin-left: 35px;">
+                            </div>
+                            <div class="row">
+                                <label for="endDate">End Date</label>
+                                <input type="date" name="end_date" class="end_date form-control" style="width: 150px; border-radius: 100px; margin-left: 40px;">
+                            </div>
+                        </div>
+                        <div id="shoplist_input" style="display:none;">
+                            <div class="row form-group" style="display: flexbox; align-items: baseline; margin-top: 10px;">
+                                <div class="jobOrderContainer">
+                                    {% block order_filter %}
+                                    {% endblock %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flexbox; justify-content: space-between;">
+                        <button type="button" class="btn dark-button" style="border-radius: 100px;" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn dark-button">  Generate</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="filtermodal" style="max-width: 700px; position: absolute;
+   top: 0;
+   right: 0;
+   bottom: 0;
+   left: 60%;">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="container">
+                        <button type="button" class="close btn-close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button></div>
+                        <input id="outofstock" name="filterstock" type="radio" class="placeholder_class" value=1>
+                        <label class="form-check-label" for="credit">Out of Stock </label>
+                        <br>
+                        <input id="instock" name="filterstock" type="radio" class="placeholder_class" value=2>
+                        <label class="form-check-label" for="debit">In Stock</label>
+                        <br>
+                        <input type='range' min='1' max='4' value='1' step='1' class="n n4" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+
+        function toggleModal(modalType, action) {
+            let modal = document.getElementById(modalType);
+            
+            if (modal) {
+                modal.style.display = action === 'open' ? 'block' : 'none';
+            }
+        }
+
+
+        function setToDeleteAndHide(selectElementID, rowID) {
+            var select = document.getElementById(selectElementID);
+            var rowElement = document.getElementById(rowID);
+
+            console.log(rowElement)
+
+            // Set the value to "delete"
+            select.selectedIndex = 0;
+
+            // Hide the select element
+            rowElement.style.display = 'none';
+        }
+        $(document).ready(function() {
+            const production_input = $('#production_input');
+            const shoplist_input = $('#shoplist_input');
+            const reptype = $('.reptype');
+            $(document).on('change', '.reptype', function() {
+                console.log('pass');
+                let reptype_val = reptype.val();
+        
+                if (reptype_val == "production") {
+                    production_input.show(); 
+                    shoplist_input.hide();
+                } else if (reptype_val == "shopping_list") {
+                    production_input.hide();
+                    shoplist_input.show();
+                } else {
+                    production_input.hide();
+                    shoplist_input.hide()
+                }
+            });
+        });
+
+    </script>
+
+</body>
+
+</html>
