@@ -23,9 +23,6 @@ urlpatterns = [
     path('customers/', views.customer_list, name='customer_list'),
     path('customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
     
-    # supplier
-    path('suppliers/', views.supplier_list, name='supplier_list'),
-    path('suppliers/<int:supplier_id>/', views.supplier_detail, name='supplier_detail'),
     
     # material
     path('materials/', views.material_list, name='material_list'),

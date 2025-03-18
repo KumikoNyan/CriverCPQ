@@ -16,7 +16,10 @@
                 <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
                 <span class="fs-4">Materials</span>
             </a>
-            <a href="{% url 'create_material' %}" class="btn btn-primary ms-3">Create Quotation</a>
+            <a href="{% url 'create_material' %}" class="btn btn-primary ms-3">Create Material</a>
+            <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
+                Suppliers
+            </button>
         </div>
     
         <!-- Right-aligned search form -->
@@ -25,28 +28,171 @@
         </form>
     </div>    
 </header>
-<div class="table-responsive">
-    <table>
-        <thead class="sticky-top">
-            <tr>
-                <th>Quotation ID</th>
-                <th>Date Created</th>
-                <th>Customer</th>
-                <th>Total Price</th>
-                <th>Version Number</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for material in materials %}
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="modal fade" id="suppliers" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel">Modal Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="supplier_container">{% csrf_token %}  
+                {% for supplier in suppliers %}
+                    <div class="supplier_row row mt-2 align-items-center" id="supplier_row{{forloop.counter}}"> 
+                        <div class="col">
+                            <input type="text" class="supplier_id form-control" value="{{supplier.supplier_id}}" readonly>
+                        </div>
+                        <div class="col">
+                            <input type="text" class="supplier_name form-control" value="{{supplier.supplier_name}}">
+                        </div>
+                        <div class="col-1">
+                            <button type="button" class="btn btn-close delete-supplier" data-row-id="supplier_row{{forloop.counter}}">
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+                <button type="button" class="btn btn-secondary mt-2 addSupplier" id="addSupplier" data-counter="{{supplier_count}}">Add Row</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary submit-supplier">Save changes</button>
+            </div>
+        </div>
+    </div>
 </div>
+<div class="material_container container d-flex justify-content-center">
+    <div class="table-responsive" style="width:80%;">
+        <table class="table table-striped table-hover table-bordered table-sm">
+            <thead class="sticky-top bg-primary text-white">
+                <tr>
+                    <th>Material ID</th>
+                    <th>Supplier </th>
+                    <th>Material Name</th>
+                    <th>Material Type</th>
+                    <th>Material Cost</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for material in materials %}
+                <tr>
+                    <td>{{material.material_id}}</td>
+                    <td>{{material.supplier.supplier_name}}</td>
+                    <td>{{material.material_name}}</td>
+                    <td>{{material.material_type|capfirst}}</td>
+                    <td>{{material.material_cost}}</td>
+                    <td><a href="{% url 'create_material' %}" class="btn btn-primary ms-3">Edit</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row mt-2 align-items-center" id="supplier_row_temp" style="display:none;"> 
+    <div class="col">
+        <input type="text" class="supplier_id form-control" value="" placeholder="Supplier ID" readonly>
+    </div>
+    <div class="col">
+        <input type="text" class="supplier_name form-control" value="" placeholder="Supplier Name">
+    </div>
+    <div class="col-1">
+        <button type="button" class="btn btn-close delete-supplier" data-row-id="supplier_row">
+        </button>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        rowCounter_addFinish = 0;
+        const supplier_container = $('.supplier_container');
+        const addSupplier_button = $('#addSupplier');
+        const supplier_template = $('#supplier_row_temp');
+        
+        function addSupplier(button) {
+            counter = button.data('counter');
+            counter++;
+
+            let newRow = supplier_template.clone();
+            newRow.addClass("supplier_row");
+            newRow.attr('id', 'supplier_row' + counter);
+            newRow.find('.supplier_id').val('');
+            newRow.find('.supplier_name').val('');
+
+            newRow.find('.delete-supplier').attr('data-row-id', 'supplier_row' + counter)
+
+            newRow.show()
+            supplier_container.append(newRow);
+            
+            button = button.data('counter', counter)
+        }
+        addSupplier_button.on('click', function () {
+            console.log('works')
+            let button = $(this);
+            addSupplier(button);
+        });
+        $(document).on('click', '.delete-supplier', function () {
+            let rowId = $(this).data('row-id');
+            let row = $('#' + rowId);
+            console.log(rowId);
+
+            let nameElement = row.find('.supplier_name');
+            nameElement.val('delete').change();
+            console.log(nameElement);
+            row.hide();
+        });
+        $(".submit-supplier").click(function() {
+            console.log('works')
+            let isValid = true;
+            supplier_data = [];
+            // Validate Material Finishes
+            $(".supplier_row").each(function() {
+                let row = $(this);
+                let supplier_id = row.find(".supplier_id").val()
+                let supplier_name = row.find(".supplier_name").val()
+
+                if (!supplier_name) {
+                    row.find(".supplier_name").addClass("is-invalid");
+                    isValid = false;
+                }
+        
+                // Add only valid data
+                if (supplier_name) {
+                    supplier_data.push({
+                        'supplier_id': supplier_id,
+                        'supplier_name': supplier_name,
+                    });
+                }
+            });
+        
+            // Prepare Data
+            let submit_data = {
+                'supplier_data': JSON.stringify(supplier_data),
+                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
+            };
+        
+            console.log(submit_data);
+        
+            // Submit Data via AJAX
+            $.ajax({
+                method: "post",
+                data: submit_data,
+                success: function(data) {
+                    console.log(data["status"]);
+                    console.log(data);
+                    if (data["status"]) {
+                        window.location = data["url"];
+                    } else {
+                        alert(data["error"]);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert("Something broke");
+                }
+            });
+        });
+        
+    })
+</script>
 {% endblock %}

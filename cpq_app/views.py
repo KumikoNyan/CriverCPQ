@@ -118,22 +118,42 @@ def customer_detail(request, customer_id):
         "email": customer.customer_email
     }})
 
-# supplier views
-def supplier_list(request):
-    suppliers = list(Supplier.objects.values())
-    return JsonResponse({"suppliers": suppliers})
 
-def supplier_detail(request, supplier_id):
-    supplier = get_object_or_404(Supplier, pk=supplier_id)
-    return JsonResponse({"supplier": {
-        "id": supplier.id,
-        "name": supplier.supplier_name
-    }})
+def supplier_operations(supplier):
+    supplier_id = supplier["supplier_id"]
+    supplier_name = supplier["supplier_name"]
+    if supplier_name == "delete":
+        print('delete!')
+        if supplier_id:
+            Supplier.objects.filter(supplier_id=supplier_id).delete()
+    elif supplier_id:
+        print('edit!')
+        supplier_object = Supplier.objects.get(supplier_id=supplier_id)
+        supplier_object.supplier_name = supplier_name
+        supplier_object.save()
+    else:
+        new_supplier = Supplier.objects.create(supplier_name = supplier_name)
+    return True
 
 # material views
 def material_list(request):
-    materials = list(Material.objects.values())
-    return render(request, 'cpq_app/material_list.html', {"materials": materials})
+    materials = Material.objects.all()
+    suppliers = Supplier.objects.all()
+    supplier_count = len(suppliers) or 0
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("supplier_data"):
+            for supplier in json.loads(request.POST.get("supplier_data")):
+                print(supplier)
+                supplier_operations(supplier)
+            response['url'] = reverse('material_list')  # URL to direct is str
+            print(response)
+            return JsonResponse(response)
+    return render(request, 'cpq_app/material_list.html', {"materials": materials, 'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def material_detail(request, material_id):
     material = get_object_or_404(Material, pk=material_id)
@@ -156,17 +176,8 @@ def create_material(request):
         if request.POST.get("supplier_data"):
             for supplier in json.loads(request.POST.get("supplier_data")):
                 print(supplier)
-                supplier_id = supplier["supplier_id"]
-                supplier_name = supplier["supplier_name"]
-                if supplier_name == "delete":
-                    Supplier.objects.filter(supplier_id=supplier_id).delete()
-                elif supplier_id:
-                    supplier_object = Supplier.objects.get(supplier_id=supplier_id)
-                    supplier_object.supplier_name = supplier_name
-                    supplier_object.save()
-                else:
-                    new_supplier = Supplier.objects.create(supplier_name = supplier_name)
-            response['url'] = reverse('material_list')  # URL to direct is str
+                supplier_operations(supplier)
+            response['url'] = reverse('create_material')  # URL to direct is str
             print(response)
             return JsonResponse(response)
         else:
@@ -174,7 +185,8 @@ def create_material(request):
             material_cost = request.POST.get("material_cost")
             material_type = request.POST.get("material_type")
             material_unit = request.POST.get("material_unit")
-            supplier = request.POST.get("supplier")
+            supplier_id = request.POST.get("supplier")
+            supplier = Supplier.objects.get(supplier_id=supplier_id)
 
             new_material = Material.objects.create(material_name=material_name, material_cost=material_cost, material_type=material_type, material_unit=material_unit, supplier=supplier)
             response['url'] = reverse('material_list')  # URL to direct is str
