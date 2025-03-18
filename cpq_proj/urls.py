@@ -16,9 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-import cpq_app
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('cpq_app/', include('cpq_app.urls'))
+    path('', include('cpq_app.urls'))
 ]

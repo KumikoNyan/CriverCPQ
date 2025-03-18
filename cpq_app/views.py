@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.urls import reverse
 
 # this shld be changed later
 def index(request):
@@ -11,7 +12,7 @@ def index(request):
 # quotation views
 def quotation_list(request):
     quotations = list(Quotation.objects.values())
-    return JsonResponse({"quotations": quotations})
+    return render(request, 'cpq_app/quotations_list.html', {"quotations": quotations})
 
 def quotation_detail(request, quotation_id):
     quotation = get_object_or_404(Quotation, pk=quotation_id)
@@ -132,7 +133,7 @@ def supplier_detail(request, supplier_id):
 # material views
 def material_list(request):
     materials = list(Material.objects.values())
-    return JsonResponse({"materials": materials})
+    return render(request, 'cpq_app/material_list.html', {"materials": materials})
 
 def material_detail(request, material_id):
     material = get_object_or_404(Material, pk=material_id)
@@ -143,6 +144,18 @@ def material_detail(request, material_id):
         "unit": material.material_unit,
         "price": material.material_price
     }})
+
+def create_material(request):
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        
+        response['url'] = reverse('material_list')  # URL to direct is str
+        print(response)
+        return JsonResponse(response)
+    return render(request, 'cpq_app/create_material.html')
 
 # material finish views
 def material_finish_list(request):

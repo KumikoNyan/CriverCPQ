@@ -1,0 +1,220 @@
+{% extends "cpq_app/base.html" %}
+<head>
+
+    <!-- load bootstrap via jsDeliver urls -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+
+</head>
+
+{% block content %}
+<header class="py-3 mb-4 border-bottom">
+    <div class="container d-flex flex-wrap justify-content-center">
+        <a href="/" class="d-flex align-items-center mb-3 mb-lg-0 me-lg-auto link-body-emphasis text-decoration-none">
+        <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
+        <span class="fs-4">Create Material</span>
+        </a>
+        <form class="col-lg-auto mb-3 mb-lg-0" role="search">
+        <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
+        </form>
+    </div>
+</header>
+<div class="material_container container d-flex justify-content-center">
+    <form method="POST" style="width:70%;"> {% csrf_token %}   
+
+        <h4> Material Attributes </h4>    
+
+        <div class="row">
+            <div class="col">
+                <label for="name">Material ID</label>
+                <input type="text" class="material_id form-control" value="" readonly>
+            </div>
+            <div class="col">
+                <label for="name">Material Name</label>
+                <input type="text" class="material_name form-control" id="name" name="name" placeholder="Material Name">
+            </div>
+            <div class="col">
+                <label for="type">Material Type</label>
+                <select class="material_type form-select" id="type" name="type">
+                    <option value="glass">Glass</option>
+                    <option value="aluminum">Aluminum</option>
+                    <option value="accessory">Accessory</option>
+                    <option value="frame">Frame</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row pt-3">
+            <div class="col">
+                <label for="cost">Cost</label>
+                <input type="number" class="material_cost form-control" id="cost" name="cost" placeholder="Cost" step="0.01">
+            </div>
+            <div class="col">
+                <label for="unit">Unit</label>
+                <select class="material_unit form-select" id="unit" name="unit">
+                    <option value="FT">per sq/ft</option>
+                    <option value="IN">per sq/in</option>
+                    <option value="M">per sq/m</option>
+                </select>
+            </div>
+        </div>
+
+        <hr>
+
+        <h4> Material Finishes </h4>  
+        <div class="finish_container">
+        </div>
+        <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish">Add Row</button>
+
+        <div class="row pt-3 mt-3">
+            <div class="col-6">
+                <button type="button" class="btn btn-secondary w-100" data-dismiss="modal">Cancel</button>
+            </div>
+            <div class="col-6">
+                <button type="button" class="submit-btn btn btn-primary w-100">Add Material</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="row align-items-center mt-2" id="materialFinish_row_temp" style="display:none;">
+    <div class="col">
+        <input type="text" class="finish_name form-control" name="accessory_unit" placeholder="Finish Name">
+    </div>
+    <div class="col">
+        <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
+            placeholder="Additional Rate">
+    </div>
+    <div class="col-1">
+        <button type="button" class="btn dark-button delete-materialFinish" data-row-id="materialFinish_row"> &times
+        </button>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        rowCounter_addFinish = 0;
+        const finish_container = $('.finish_container');
+        const finish_template = $('#materialFinish_row_temp');
+        const addFinish_button = $('#addFinish');
+        const material_container = $('.material_container');
+        
+        function addFinish() {
+            rowCounter_addFinish++;
+
+            let newRow = finish_template.clone();
+            newRow.addClass("materialFinish_row");
+            newRow.attr('id', 'materialFinish_row' + rowCounter_addFinish);
+            newRow.find('.finish_name').val('');
+            newRow.find('.finish_cost').val('');
+
+            newRow.find('.delete-materialFinish').attr('data-row-id', 'materialFinish_row' + rowCounter_addFinish)
+
+            newRow.show()
+            finish_container.append(newRow);
+        }
+        addFinish_button.on('click', function () {
+            let button = $(this);
+            addFinish();
+        });
+        $(document).on('click', '.delete-materialFinish', function () {
+            let rowId = $(this).data('row-id');
+            let row = $('#' + rowId);
+            console.log(rowId);
+
+            let nameElement = row.find('.finish_name');
+            
+            nameElement.val('delete').change();
+            row.hide();
+        });
+        $(".submit-btn").click(function() {
+            let isValid = true;  // Track validation state
+            let finish_data = [];
+        
+            // Reset previous validation styles
+            $(".form-control, .form-select").removeClass("is-invalid");
+        
+            // Validate Material Attributes
+            let material_id = $(".material_id").val()
+            let material_name = $(".material_name").val()
+            let material_cost = $(".material_cost").val()
+            let material_type = $(".material_type").val();
+            let material_unit = $(".material_unit").val();
+        
+            if (!material_name) {
+                $(".material_name").addClass("is-invalid");
+                isValid = false;
+            }
+            if (!material_cost) {
+                $(".material_cost").addClass("is-invalid");
+                isValid = false;
+            }
+        
+            // Validate Material Finishes
+            $(".materialFinish_row").each(function() {
+                let row = $(this);
+                let finish_name = row.find(".finish_name").val()
+                let finish_cost = row.find(".finish_cost").val()
+        
+                if (!finish_name) {
+                    row.find(".finish_name").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!finish_cost) {
+                    row.find(".finish_cost").addClass("is-invalid");
+                    isValid = false;
+                }
+        
+                // Add only valid data
+                if (finish_name && finish_cost) {
+                    finish_data.push({
+                        'finish_name': finish_name,
+                        'finish_cost': finish_cost,
+                    });
+                }
+            });
+        
+            // Stop submission if validation fails
+            if (!isValid) {
+                alert("Please fill in all required fields.");
+                return;
+            }
+        
+            // Prepare Data
+            let submit_data = {
+                'material_id': material_id,
+                'material_name': material_name,
+                'material_cost': material_cost,
+                'material_type': material_type,
+                'material_unit': material_unit,
+                'finish_data': finish_data,
+                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
+            };
+        
+            console.log(submit_data);
+        
+            // Submit Data via AJAX
+            $.ajax({
+                method: "post",
+                data: submit_data,
+                success: function(data) {
+                    console.log(data["status"]);
+                    console.log(data);
+                    if (data["status"]) {
+                        window.location = data["url"];
+                    } else {
+                        alert(data["error"]);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert("Something broke");
+                }
+            });
+        });
+        
+    })
+</script>
+{% endblock %}
