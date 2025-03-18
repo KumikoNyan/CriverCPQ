@@ -146,16 +146,41 @@ def material_detail(request, material_id):
     }})
 
 def create_material(request):
+    suppliers = Supplier.objects.all()
+    supplier_count = len(suppliers) or 0
     if request.method == "POST":
         response = {}
         response['status'] = True
         print(request.POST)
 
-        
-        response['url'] = reverse('material_list')  # URL to direct is str
-        print(response)
-        return JsonResponse(response)
-    return render(request, 'cpq_app/create_material.html')
+        if request.POST.get("supplier_data"):
+            for supplier in json.loads(request.POST.get("supplier_data")):
+                print(supplier)
+                supplier_id = supplier["supplier_id"]
+                supplier_name = supplier["supplier_name"]
+                if supplier_name == "delete":
+                    Supplier.objects.filter(supplier_id=supplier_id).delete()
+                elif supplier_id:
+                    supplier_object = Supplier.objects.get(supplier_id=supplier_id)
+                    supplier_object.supplier_name = supplier_name
+                    supplier_object.save()
+                else:
+                    new_supplier = Supplier.objects.create(supplier_name = supplier_name)
+            response['url'] = reverse('material_list')  # URL to direct is str
+            print(response)
+            return JsonResponse(response)
+        else:
+            material_name = request.POST.get("material_name")
+            material_cost = request.POST.get("material_cost")
+            material_type = request.POST.get("material_type")
+            material_unit = request.POST.get("material_unit")
+            supplier = request.POST.get("supplier")
+
+            new_material = Material.objects.create(material_name=material_name, material_cost=material_cost, material_type=material_type, material_unit=material_unit, supplier=supplier)
+            response['url'] = reverse('material_list')  # URL to direct is str
+            print(response)
+            return JsonResponse(response)
+    return render(request, 'cpq_app/create_material.html', {'suppliers': suppliers, 'supplier_count': supplier_count})
 
 # material finish views
 def material_finish_list(request):

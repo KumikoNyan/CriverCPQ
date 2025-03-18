@@ -11,16 +11,58 @@
 
 {% block content %}
 <header class="py-3 mb-4 border-bottom">
-    <div class="container d-flex flex-wrap justify-content-center">
-        <a href="/" class="d-flex align-items-center mb-3 mb-lg-0 me-lg-auto link-body-emphasis text-decoration-none">
-        <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-        <span class="fs-4">Create Material</span>
-        </a>
-        <form class="col-lg-auto mb-3 mb-lg-0" role="search">
-        <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center">
+        <!-- Left-aligned section -->
+        <div class="d-flex align-items-center">
+            <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none">
+                <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
+                <span class="fs-4">Create Material</span>
+            </a>
+            <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
+                Open Modal
+            </button>
+        </div>
+    
+        <!-- Right-aligned search form -->
+        <form class="col-lg-auto mb-lg-0" role="search">
+            <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
         </form>
-    </div>
+    </div>    
 </header>
+<!-- Modal -->
+<div class="modal fade" id="suppliers" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel">Modal Title</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="supplier_container">
+                {% for supplier in suppliers %}
+                    <div class="supplier_row row mt-2 align-items-center" id="supplier_row{{forloop.counter}}"> 
+                        <div class="col">
+                            <input type="text" class="supplier_id form-control" value="{{supplier.supplier_id}}" readonly>
+                        </div>
+                        <div class="col">
+                            <input type="text" class="supplier_name form-control" value="{{supplier.supplier_name}}">
+                        </div>
+                        <div class="col-1">
+                            <button type="button" class="btn btn-close delete-supplier" data-row-id="supplier_row{{forloop.counter}}">
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+                <button type="button" class="btn btn-secondary mt-2 addSupplier" id="addSupplier" data-counter="{{supplier_count}}">Add Row{{supplier_count}}</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary submit-supplier">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="material_container container d-flex justify-content-center">
     <form method="POST" style="width:70%;"> {% csrf_token %}   
 
@@ -59,6 +101,12 @@
                     <option value="M">per sq/m</option>
                 </select>
             </div>
+            <div class="col">
+                <label for="supplier">Unit</label>
+                <select class="supplier form-select" id="supplier" name="supplier">
+                    <option value="Supplier 1">Supplier 1</option>
+                </select>
+            </div>
         </div>
 
         <hr>
@@ -88,7 +136,20 @@
             placeholder="Additional Rate">
     </div>
     <div class="col-1">
-        <button type="button" class="btn dark-button delete-materialFinish" data-row-id="materialFinish_row"> &times
+        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row"> &times
+        </button>
+    </div>
+</div>
+
+<div class="row mt-2 align-items-center" id="supplier_row_temp" style="display:none;"> 
+    <div class="col">
+        <input type="text" class="supplier_id form-control" value="" placeholder="Supplier ID" readonly>
+    </div>
+    <div class="col">
+        <input type="text" class="supplier_name form-control" value="" placeholder="Supplier Name">
+    </div>
+    <div class="col-1">
+        <button type="button" class="btn btn-close delete-supplier" data-row-id="supplier_row">
         </button>
     </div>
 </div>
@@ -101,6 +162,9 @@
         const finish_template = $('#materialFinish_row_temp');
         const addFinish_button = $('#addFinish');
         const material_container = $('.material_container');
+        const supplier_container = $('.supplier_container');
+        const addSupplier_button = $('#addSupplier');
+        const supplier_template = $('#supplier_row_temp');
         
         function addFinish() {
             rowCounter_addFinish++;
@@ -116,33 +180,113 @@
             newRow.show()
             finish_container.append(newRow);
         }
+        function addSupplier(button) {
+            counter = button.data('counter');
+            counter++;
+
+            let newRow = supplier_template.clone();
+            newRow.addClass("supplier_row");
+            newRow.attr('id', 'supplier_row' + counter);
+            newRow.find('.supplier_id').val('');
+            newRow.find('.supplier_name').val('');
+
+            newRow.find('.delete-supplier').attr('data-row-id', 'supplier_row' + counter)
+
+            newRow.show()
+            supplier_container.append(newRow);
+            
+            button = button.data('counter', counter)
+        }
         addFinish_button.on('click', function () {
             let button = $(this);
             addFinish();
         });
+        addSupplier_button.on('click', function () {
+            console.log('works')
+            let button = $(this);
+            addSupplier(button);
+        });
         $(document).on('click', '.delete-materialFinish', function () {
             let rowId = $(this).data('row-id');
             let row = $('#' + rowId);
-            console.log(rowId);
 
             let nameElement = row.find('.finish_name');
             
             nameElement.val('delete').change();
             row.hide();
         });
+        $(document).on('click', '.delete-supplier', function () {
+            let rowId = $(this).data('row-id');
+            let row = $('#' + rowId);
+            console.log(rowId);
+
+            let nameElement = row.find('.supplier_name');
+            nameElement.val('delete').change();
+            console.log(nameElement);
+            row.hide();
+        });
+        $(".submit-supplier").click(function() {
+            console.log('works')
+            let isValid = true;
+            supplier_data = [];
+            // Validate Material Finishes
+            $(".supplier_row").each(function() {
+                let row = $(this);
+                let supplier_id = row.find(".supplier_id").val()
+                let supplier_name = row.find(".supplier_name").val()
+
+                if (!supplier_name) {
+                    row.find(".supplier_name").addClass("is-invalid");
+                    isValid = false;
+                }
+        
+                // Add only valid data
+                if (supplier_name) {
+                    supplier_data.push({
+                        'supplier_id': supplier_id,
+                        'supplier_name': supplier_name,
+                    });
+                }
+            });
+        
+            // Prepare Data
+            let submit_data = {
+                'supplier_data': JSON.stringify(supplier_data),
+                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
+            };
+        
+            console.log(submit_data);
+        
+            // Submit Data via AJAX
+            $.ajax({
+                method: "post",
+                data: submit_data,
+                success: function(data) {
+                    console.log(data["status"]);
+                    console.log(data);
+                    if (data["status"]) {
+                        window.location = data["url"];
+                    } else {
+                        alert(data["error"]);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert("Something broke");
+                }
+            });
+        });
         $(".submit-btn").click(function() {
-            let isValid = true;  // Track validation state
+            let isValid = true;
             let finish_data = [];
         
-            // Reset previous validation styles
             $(".form-control, .form-select").removeClass("is-invalid");
-        
-            // Validate Material Attributes
-            let material_id = $(".material_id").val()
-            let material_name = $(".material_name").val()
-            let material_cost = $(".material_cost").val()
+
+            let material_id = $(".material_id").val();
+            let material_name = $(".material_name").val();
+            let material_cost = $(".material_cost").val();
             let material_type = $(".material_type").val();
             let material_unit = $(".material_unit").val();
+            let material_supplier = $(".supplier").val();
         
             if (!material_name) {
                 $(".material_name").addClass("is-invalid");
@@ -190,7 +334,8 @@
                 'material_cost': material_cost,
                 'material_type': material_type,
                 'material_unit': material_unit,
-                'finish_data': finish_data,
+                'supplier': material_supplier,
+                'finish_data': JSON.stringify(finish_data),
                 "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
             };
         

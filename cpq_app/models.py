@@ -67,7 +67,7 @@ class Material(models.Model):
     material_name = models.CharField(max_length=255)
     material_type = models.CharField(max_length=255)
     material_unit = models.CharField(max_length=50)
-    material_price = models.DecimalField(max_digits=10, decimal_places=2)
+    material_cost = models.DecimalField(max_digits=10, decimal_places=2)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
 
     def __str__(self):
