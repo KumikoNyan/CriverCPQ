@@ -1,0 +1,40 @@
+pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client reportlab
+We need to go to GCC, enable Google Drive API, Create OAuth, download credentials.json, place in directory
+
+views.py
+from google.oauth2.service_account import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+-------------
+
+def upload_to_drive(file_path):
+    """Uploads a file to Google Drive."""
+    SCOPES = ['https://www.googleapis.com/auth/drive.file']
+    
+    creds = Credentials.from_service_account_file('credentials.json', scopes=SCOPES)
+    service = build('drive', 'v3', credentials=creds)
+
+    file_metadata = {
+        'name': os.path.basename(file_path),
+        'mimeType': 'application/pdf'
+    }
+    media = MediaFileUpload(file_path, mimetype='application/pdf')
+
+    file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+    return file.get('id')  # Returns the file ID from Google Drive
+
+If we want to do it so that it cleans up the local copy as well
+
+---------
+
+from django.shortcuts import render
+from django.http import JsonResponse
+def generate_and_upload_pdf(request):
+    """Generates a PDF and uploads it to Google Drive."""
+    pdf_path = generate_pdf()  # Create PDF
+    file_id = upload_to_drive(pdf_path)  # Upload to Google Drive
+    
+    os.remove(pdf_path)  # Cleanup local file
+
+    return JsonResponse({'message': 'PDF uploaded successfully!', 'file_id': file_id})
