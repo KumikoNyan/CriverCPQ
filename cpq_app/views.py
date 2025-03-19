@@ -9,6 +9,12 @@ from django.urls import reverse
 def index(request):
     return JsonResponse({"message": "Welcome Bitch!"})
 
+def about_list(request):
+    return render(request, 'cpq_app/about_list.html')
+
+def faq_list(request):
+    return render(request, 'cpq_app/faq_list.html')
+
 # quotation views
 def quotation_list(request):
     quotations = list(Quotation.objects.values())

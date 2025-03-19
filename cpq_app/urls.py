@@ -34,4 +34,13 @@ urlpatterns = [
     # material finish
     path('materials/finishes/', views.material_finish_list, name='material_finish_list'),
     path('materials/finishes/<int:finish_id>/', views.material_finish_detail, name='material_finish_detail'),
+
+    # FAQ 
+    path('faq/', views.faq_list, name='faq_list'),
+
+
+    # about 
+    path('about/', views.about_list, name='about_list'),
+
+
 ]
