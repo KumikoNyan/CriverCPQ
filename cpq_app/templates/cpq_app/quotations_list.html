@@ -19,28 +19,31 @@
         </form>
     </div>
 </header>
-<div class="table-responsive">
-    <table>
-        <thead class="sticky-top">
-            <tr>
-                <th>Quotation ID</th>
-                <th>Date Created</th>
-                <th>Customer</th>
-                <th>Total Price</th>
-                <th>Version Number</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for quotation in quotations %}
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+<div class="material_container container d-flex justify-content-center">
+    <div class="table-responsive" style="width:80%;">
+        <table class="table table-striped table-hover table-bordered table-sm">
+            <thead class="sticky-top bg-primary text-white" >
+                <tr>
+                    <th>Quotation ID</th>
+                    <th>Date Created</th>
+                    <th>Customer</th>
+                    <th>Total Price</th>
+                    <th>Version Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quotation in quotations %}
+                <tr>
+                    <td>{{quotation.quotation_id}}</td>
+                    <td>{{quotation.date_created}}</td>
+                    <td>{{quotation.customer}}</td>
+                    <td>{{quotation}}</td>
+                    <td>{{quotation}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
