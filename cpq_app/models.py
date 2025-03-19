@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.db.models import Sum
 # check these lol
 class Customer(models.Model):
     customer_id = models.AutoField(primary_key=True)
@@ -79,6 +79,8 @@ class Quotation(models.Model):
     version_number = models.IntegerField()
     is_active_version = models.BooleanField(default=True)
 
+    def total_quotation_price(self): #Check back on this when we have sample quotations
+        return self.quotationitem_set.aggregate(Sum('total_price'))['total_price__sum'] or 0 #Check back on this when we have sample quotations, im relying on old boards here
     def __str__(self):
         return f"Quotation {self.quotation_id} - Version {self.version_number}"
 
