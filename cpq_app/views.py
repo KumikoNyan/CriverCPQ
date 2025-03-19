@@ -135,6 +135,21 @@ def supplier_operations(supplier):
         new_supplier = Supplier.objects.create(supplier_name = supplier_name)
     return True
 
+def delete_material(material_id):
+    material_object = Material.objects.get(material_id=material_id)
+    material_object.delete()
+
+# product
+def product_list(request):
+    products = Product.objects.all()
+    
+    return render(request, 'cpq_app/product_list.html', {"products": products})
+
+def create_product(request):
+    materials = Material.objects.all()
+    material_data = []
+    suppliers = Supplier.objects.all()
+    return render(request, 'cpq_app/create_product.html', {"materials": material_data, "suppliers": suppliers})
 # material views
 def material_list(request):
     materials = Material.objects.all()
@@ -146,7 +161,13 @@ def material_list(request):
         response['status'] = True
         print(request.POST)
 
-        if request.POST.get("supplier_data"):
+        if request.POST.get("action") == "delete":
+            material_id = request.POST.get("material_id")
+            delete_material(material_id)
+            response['url'] = reverse('material_list')  # URL to direct is str
+            print(response)
+            return JsonResponse(response)
+        elif request.POST.get("supplier_data"):
             for supplier in json.loads(request.POST.get("supplier_data")):
                 print(supplier)
                 supplier_operations(supplier)
@@ -156,14 +177,59 @@ def material_list(request):
     return render(request, 'cpq_app/material_list.html', {"materials": materials, 'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def material_detail(request, material_id):
-    material = get_object_or_404(Material, pk=material_id)
-    return JsonResponse({"material": {
-        "id": material.id,
-        "name": material.material_name,
-        "type": material.material_type,
-        "unit": material.material_unit,
-        "price": material.material_price
-    }})
+    material_object = Material.objects.get(material_id=material_id)
+    finishes = MaterialFinish.objects.filter(material=material_object)
+    suppliers = Supplier.objects.all()
+    supplier_count = len(suppliers) or 0
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("action") == "delete":
+            material_id = request.POST.get("material_id")
+            delete_material(material_id)
+            response['url'] = reverse('material_list')  # URL to direct is str
+            print(response)
+            return JsonResponse(response)
+        else:
+            if request.POST.get("supplier_data"):
+                for supplier in json.loads(request.POST.get("supplier_data")):
+                    print(supplier)
+                    supplier_operations(supplier)
+                response['url'] = reverse('create_material')  # URL to direct is str
+                print(response)
+                return JsonResponse(response)
+            else:
+                material_id = request.POST.get("material_id")
+                material_name = request.POST.get("material_name")
+                material_cost = request.POST.get("material_cost")
+                material_type = request.POST.get("material_type")
+                material_unit = request.POST.get("material_unit")
+                supplier_id = request.POST.get("supplier")
+                finish_data = json.loads(request.POST.get("finish_data", "[]"))  # Load finishes
+
+                material = get_object_or_404(Material, material_id=material_id)
+                material.material_name = material_name
+                material.material_cost = material_cost
+                material.material_type = material_type
+                material.material_unit = material_unit
+                material.supplier = get_object_or_404(Supplier, supplier_id=supplier_id)
+                material.save()
+
+                MaterialFinish.objects.filter(material=material).delete()
+
+                finish_data = json.loads(request.POST.get("finish_data"))
+                if finish_data:
+                    for finish in finish_data:
+                        finish_name = finish["finish_name"]
+                        finish_cost = finish["finish_cost"]
+                        if finish_name != 'delete':
+                            new_finish = MaterialFinish.objects.create(finish_name=finish_name, finish_cost=finish_cost, material=material)
+
+                response['url'] = reverse('material_list')  # URL to direct is str
+                return JsonResponse(response)
+    return render(request, 'cpq_app/material_detail.html', {'material_object': material_object, 'finishes': finishes, 'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def create_material(request):
     suppliers = Supplier.objects.all()
@@ -189,6 +255,15 @@ def create_material(request):
             supplier = Supplier.objects.get(supplier_id=supplier_id)
 
             new_material = Material.objects.create(material_name=material_name, material_cost=material_cost, material_type=material_type, material_unit=material_unit, supplier=supplier)
+
+            finish_data = json.loads(request.POST.get("finish_data"))
+            if finish_data:
+                for finish in finish_data:
+                    finish_name = finish["finish_name"]
+                    finish_cost = finish["finish_cost"]
+                    if finish_name != 'delete':
+                        new_finish = MaterialFinish.objects.create(finish_name=finish_name, finish_cost=finish_cost, material=new_material)
+
             response['url'] = reverse('material_list')  # URL to direct is str
             print(response)
             return JsonResponse(response)

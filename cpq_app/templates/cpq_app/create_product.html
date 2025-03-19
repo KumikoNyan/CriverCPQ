@@ -16,7 +16,7 @@
         <div class="d-flex align-items-center">
             <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none">
                 <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-                <span class="fs-4">Create Material</span>
+                <span class="fs-4">Product Material</span>
             </a>
             <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
                 Suppliers
@@ -63,43 +63,38 @@
         </div>
     </div>
 </div>
-<div class="material_container container d-flex justify-content-center">
+<div class="product_container container d-flex justify-content-center">
     <form method="POST" style="width:70%;"> {% csrf_token %}   
 
-        <h4> Material Attributes </h4>    
+        <h4> Product Attributes </h4>    
 
         <div class="row">
             <div class="col">
-                <label for="name">Material ID</label>
+                <label for="name">Product ID</label>
                 <input type="text" class="material_id form-control" value="" readonly>
             </div>
             <div class="col">
-                <label for="name">Material Name</label>
+                <label for="name">Name</label>
                 <input type="text" class="material_name form-control" id="name" name="name" placeholder="Material Name">
             </div>
             <div class="col">
-                <label for="type">Material Type</label>
+                <label for="type">Category</label>
                 <select class="material_type form-select" id="type" name="type">
-                    <option value="glass">Glass</option>
-                    <option value="aluminum">Aluminum</option>
-                    <option value="accessory">Accessory</option>
-                    <option value="frame">Frame</option>
+                    <option value="window">Window</option>
+                    <option value="door">Door</option>
+                    <option value="enclosure">Enclosure</option>
                 </select>
             </div>
         </div>
 
         <div class="row pt-3">
             <div class="col">
-                <label for="cost">Cost</label>
-                <input type="number" class="material_cost form-control" id="cost" name="cost" placeholder="Cost" step="0.01">
+                <label for="margin">Margin</label>
+                <input type="number" class="product_margin form-control" name="product_margin" placeholder="Margin">
             </div>
             <div class="col">
-                <label for="unit">Unit</label>
-                <select class="material_unit form-select" id="unit" name="unit">
-                    <option value="FT">per sq/ft</option>
-                    <option value="IN">per sq/in</option>
-                    <option value="M">per sq/m</option>
-                </select>
+                <label for="labor">Labor Margin</label>
+                <input type="number" class="product_labor form-control" name="product_labor" placeholder="Labor Margin">
             </div>
             <div class="col">
                 <label for="supplier">Supplier</label>
@@ -113,7 +108,7 @@
 
         <hr>
 
-        <h4> Material Finishes </h4>  
+        <h4> Product Materials </h4>  
         <div class="finish_container">
         </div>
         <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish">Add Row</button>
@@ -138,7 +133,7 @@
             placeholder="Additional Rate">
     </div>
     <div class="col-1">
-        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row"> &times
+        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row">
         </button>
     </div>
 </div>

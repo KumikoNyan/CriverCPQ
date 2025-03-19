@@ -13,6 +13,8 @@ urlpatterns = [
     path('quotations/<int:quotation_id>/status/<str:status>/', views.update_quotation_status, name='update_quotation_status'),
     
     # bill of materials (BOM)
+    path('products/', views.product_list, name='product_list'),
+    path('products/create_product', views.create_product, name='create_product'),
     path('products/<int:product_id>/bom/', views.get_bill_of_materials, name='get_bill_of_materials'),
     
     # quotation item

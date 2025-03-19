@@ -82,7 +82,9 @@
                     <td>{{material.material_name}}</td>
                     <td>{{material.material_type|capfirst}}</td>
                     <td>{{material.material_cost}}</td>
-                    <td><a href="{% url 'create_material' %}" class="btn btn-primary ms-3">Edit</a></td>
+                    <td><button type="button" class="submit-delete btn btn-primary" data-material-id="{{material.material_id}}">Delete</button>
+                        <a href="{% url 'material_detail' material_id=material.material_id %}" class="btn btn-primary">Edit</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -192,6 +194,44 @@
                 }
             });
         });
+
+        $(".submit-delete").click(function() {
+            let material_id = $(this).data("material-id");
+        
+            if (!confirm("Are you sure you want to delete this material?")) {
+                return;
+            }
+        
+            // Prepare Data
+            let delete_data = {
+                "material_id": material_id,
+                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
+                "action": "delete",
+            };
+        
+            console.log("Deleting material:", delete_data);
+        
+            // Send AJAX Request
+            $.ajax({
+                method: "post",
+                url: "/materials/",  // Adjust this URL based on your Django endpoint
+                data: delete_data,
+                success: function(data) {
+                    console.log(data);
+                    if (data["status"]) {
+                        alert("Material deleted successfully.");
+                        window.location = data["url"];
+                    } else {
+                        alert("Failed to delete material: " + data["error"]);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert("Something went wrong.");
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+        
         
     })
 </script>
