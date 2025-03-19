@@ -4,6 +4,7 @@ from .models import *
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
+from collections import defaultdict
 
 # this shld be changed later
 def index(request):
@@ -147,9 +148,38 @@ def product_list(request):
 
 def create_product(request):
     materials = Material.objects.all()
-    material_data = []
     suppliers = Supplier.objects.all()
-    return render(request, 'cpq_app/create_product.html', {"materials": material_data, "suppliers": suppliers})
+
+    material_data_by_suppliers = []
+    for supplier in suppliers:
+        temp_supplier = {
+            "supplier_id": supplier.supplier_id,
+            "supplier_name": supplier.supplier_name,
+            "materials": []
+        }
+        supplier_materials = supplier.material_set.all()
+        for material in supplier_materials:
+            temp_material = {
+                "material_id": material.material_id,
+                "material_name": material.material_name,
+                "material_type": material.material_type,
+                "material_unit": material.material_unit,
+                "material_cost": material.material_cost,
+                "material_finishes": [],
+            }
+            finishes = material.materialfinish_set.all()
+            for finish in finishes:
+                temp_material["material_finishes"].append({
+                    "finish_id": finish.finish_id,
+                    "finish_name": finish.finish_name,
+                    "finish_cost": finish.finish_cost,
+                })
+            temp_supplier["materials"].append(temp_material)
+        material_data_by_suppliers.append(temp_supplier)
+
+    
+    print(material_data_by_suppliers)
+    return render(request, 'cpq_app/create_product.html', {"materials": materials, "suppliers": suppliers, "material_data": material_data_by_suppliers})
 # material views
 def material_list(request):
     materials = Material.objects.all()

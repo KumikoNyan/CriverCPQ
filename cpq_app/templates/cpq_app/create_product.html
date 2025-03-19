@@ -16,7 +16,7 @@
         <div class="d-flex align-items-center">
             <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none">
                 <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-                <span class="fs-4">Product Material</span>
+                <span class="fs-4">Create Products</span>
             </a>
             <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
                 Suppliers
@@ -107,13 +107,18 @@
         </div>
 
         <hr>
-
         <h4> Product Materials </h4>  
-        <div class="finish_container">
+        <label for="supplier_materials">Supplier</label>
+        <select class="supplier_materials form-select w-25" id="supplier_materials" name="supplier_materials">
+            {% for supplier in suppliers %}
+                <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
+            {% endfor %}
+        </select>
+        <div class="finish_container mt-3">
         </div>
-        <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish">Add Row</button>
+        <button type="button" class="btn btn-secondary mt-2 addMaterial" id="addMaterial">Add Row</button>
 
-        <div class="row pt-3 mt-3">
+        <div class="row mt-3">
             <div class="col-6">
                 <a href="{% url 'material_list' %}" class="btn btn-secondary w-100">Cancel</a>
             </div>
@@ -124,9 +129,9 @@
     </form>
 </div>
 
-<div class="row align-items-center mt-2" id="materialFinish_row_temp" style="display:none;">
+<div class="row align-items-center mt-2" id="productMaterial_row_temp" style="display:none;">
     <div class="col">
-        <input type="text" class="finish_name form-control" name="accessory_unit" placeholder="Finish Name">
+        <input type="text" class="product_name form-control" name="accessory_unit" placeholder="Finish Name">
     </div>
     <div class="col">
         <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
