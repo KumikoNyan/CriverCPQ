@@ -14,9 +14,9 @@
         <div class="d-flex align-items-center">
             <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none">
                 <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-                <span class="fs-4">Materials</span>
+                <span class="fs-4">Customers</span>
             </a>
-            <a href="{% url 'create_material' %}" class="btn btn-primary ms-3">Create Material</a>
+            <a href="{% url 'add_customer' %}" class="btn btn-primary ms-3">Add Customer</a>
             <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
                 Suppliers
             </button>
@@ -32,8 +32,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="myModalLabel">Suppliers</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                
             </div>
             <div class="modal-body">
                 <div class="supplier_container">{% csrf_token %}  
@@ -66,16 +65,27 @@
         <table class="table table-striped table-hover table-bordered table-sm">
             <thead class="sticky-top bg-primary text-white">
                 <tr>
-                    <th>Material ID</th>
-                    <th>Supplier </th>
-                    <th>Material Name</th>
-                    <th>Material Type</th>
-                    <th>Material Cost</th>
+                    <th>Customer ID</th>
+                    <th>Name</th>
+                    <th>Address</th>
+                    <th>Mobile No.</th>
+                    <th>Email</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                
+                {% for product in products %}
+                <tr>
+                    <td>{{product.product_id}}</td>
+                    <td>{{product.supplier}}</td>
+                    <td>{{product.product_name}}</td>
+                    <td>{{product.product_category|capfirst}}</td>
+                    <td>cost</td>
+                    <td><button type="button" class="submit-delete btn btn-primary" data-product-id="{{product.product_id}}">Delete</button>
+                        <a href="{% url 'product_detail' product_id=product.product_id %}" class="btn btn-primary">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

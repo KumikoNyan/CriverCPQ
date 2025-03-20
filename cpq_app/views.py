@@ -105,19 +105,13 @@ def get_quotation_items(request, quotation_id):
 
 # customer views
 def customer_list(request):
-    customers = list(Customer.objects.values())
-    return JsonResponse({"customers": customers})
+    return render(request, 'cpq_app/customer_list.html')
 
 def customer_detail(request, customer_id):
-    customer = get_object_or_404(Customer, pk=customer_id)
-    return JsonResponse({"customer": {
-        "id": customer.id,
-        "name": customer.customer_name,
-        "address": customer.customer_address,
-        "mobile": customer.customer_mobile,
-        "email": customer.customer_email
-    }})
+    pass
 
+def add_customer(request):
+    pass
 
 def supplier_operations(supplier):
     supplier_id = supplier["supplier_id"]
