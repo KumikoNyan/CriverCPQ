@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
 
-# this shld be changed later
+# Change welcome message later or remove if not needed
 def index(request):
     return JsonResponse({"message": "Welcome Bitch!"})
 
@@ -38,7 +38,7 @@ def create_quotation(request):
         )
         return JsonResponse({"message": "Quotation created successfully", "quotation_id": quotation.id})
 
-# quotation versioning i have no clue if this will work, but generally it should save the previous versions
+# quotation versioning
 @csrf_exempt
 def create_quotation_version(request, quotation_id):
     if request.method == "POST":
@@ -49,10 +49,10 @@ def create_quotation_version(request, quotation_id):
             date_created=old_quotation.date_created,
             quotation_status=old_quotation.quotation_status,
             version_number=new_version_number,
-            is_active_version=True
+            is_active_version=True # sets the new quotation as active
         )
         old_quotation.is_active_version = False
-        old_quotation.save()
+        old_quotation.save() # saves the old version/s and sets it to not active
         
         return JsonResponse({"message": "Quotation version created", "new_version_id": new_quotation.id})
 
@@ -61,7 +61,7 @@ def get_quotation_versions(request, quotation_id):
     versions = list(Quotation.objects.filter(id=quotation_id).values())
     return JsonResponse({"quotation_versions": versions})
 
-# bom breakdown (is this really it lang? can someone confirm)
+# BoM breakdown
 def get_bill_of_materials(request, product_id):
     product = get_object_or_404(Product, pk=product_id)
     materials = ProductMaterial.objects.filter(product_id=product.id)
