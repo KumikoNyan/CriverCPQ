@@ -417,3 +417,10 @@ def update_quotation_status(request, quotation_id, status):
     quotation.quotation_status = status
     quotation.save()
     return JsonResponse({"message": "Quotation status updated", "quotation_id": quotation_id, "status": status})
+
+# misc for the faq and about
+def faq(request):
+    return render(request, 'cpq_app/faq.html')
+
+def about(request):
+    return render(request, 'cpq_app/about.html')
