@@ -16,7 +16,7 @@
         <div class="d-flex align-items-center">
             <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none">
                 <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-                <span class="fs-4">Product Material</span>
+                <span class="fs-4">Edit Product</span>
             </a>
             <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
                 Suppliers
@@ -63,38 +63,43 @@
         </div>
     </div>
 </div>
-<div class="product_container container d-flex justify-content-center">
+<div class="material_container container d-flex justify-content-center">
     <form method="POST" style="width:70%;"> {% csrf_token %}   
 
-        <h4> Product Attributes </h4>    
+        <h4> Material Attributes </h4>    
 
         <div class="row">
             <div class="col">
-                <label for="name">Product ID</label>
-                <input type="text" class="material_id form-control" value="" readonly>
+                <label for="name">Material ID</label>
+                <input type="text" class="material_id form-control" value="{{material_object.material_id}}" readonly>
             </div>
             <div class="col">
-                <label for="name">Name</label>
-                <input type="text" class="material_name form-control" id="name" name="name" placeholder="Product Name">
+                <label for="name">Material Name</label>
+                <input type="text" class="material_name form-control" id="name" name="name" value="{{material_object.material_name}}">
             </div>
             <div class="col">
-                <label for="type">Category</label>
+                <label for="type">Material Type</label>
                 <select class="material_type form-select" id="type" name="type">
-                    <option value="window">Window</option>
-                    <option value="door">Door</option>
-                    <option value="enclosure">Enclosure</option>
+                    <option value="glass" {% if material_object.material_type == 'glass' %}selected{%endif%}>Glass</option>
+                    <option value="aluminum"{% if material_object.material_type == 'aluminum' %}selected{%endif%}>Aluminum</option>
+                    <option value="accessory"{% if material_object.material_type == 'accessory' %}selected{%endif%}>Accessory</option>
+                    <option value="frame"{% if material_object.material_type == 'frame' %}selected{%endif%}>Frame</option>
                 </select>
             </div>
         </div>
 
         <div class="row pt-3">
             <div class="col">
-                <label for="margin">Margin</label>
-                <input type="number" class="product_margin form-control" name="product_margin" placeholder="Margin">
+                <label for="cost">Cost</label>
+                <input type="number" class="material_cost form-control" id="cost" name="cost" value="{{material_object.material_cost}}" step="0.01">
             </div>
             <div class="col">
-                <label for="labor">Labor Margin</label>
-                <input type="number" class="product_labor form-control" name="product_labor" placeholder="Labor Margin">
+                <label for="unit">Unit</label>
+                <select class="material_unit form-select" id="unit" name="unit">
+                    <option value="FT"{% if material_object.material_unit == 'FT' %}selected{%endif%}>per sq/ft</option>
+                    <option value="IN"{% if material_object.material_unit == 'IN' %}selected{%endif%}>per sq/in</option>
+                    <option value="M"{% if material_object.material_unit == 'M' %}selected{%endif%}>per sq/m</option>
+                </select>
             </div>
             <div class="col">
                 <label for="supplier">Supplier</label>
@@ -108,17 +113,35 @@
 
         <hr>
 
-        <h4> Product Materials </h4>  
+        <h4> Material Finishes </h4>  
         <div class="finish_container">
+            {% for finish in finishes %}
+            <div class="materialFinish_row row align-items-center mt-2" id="materialFinish_row{{finish.finish_id}}">
+                <div class="col">
+                    <input type="text" class="finish_name form-control" name="accessory_unit" value="{{finish.finish_name}}">
+                </div>
+                <div class="col">
+                    <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
+                        value="{{finish.finish_cost}}">
+                </div>
+                <div class="col-1">
+                    <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row{{finish.finish_id}}">
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish">Add Row</button>
 
         <div class="row pt-3 mt-3">
-            <div class="col-6">
+            <div class="col">
                 <a href="{% url 'product_list' %}" class="btn btn-secondary w-100">Cancel</a>
             </div>
-            <div class="col-6">
-                <button type="button" class="submit-btn btn btn-primary w-100">Add Product</button>
+            <div class="col">
+                <button type="button" class="submit-delete btn btn-primary w-100" data-material-id="{{material_object.material_id}}">Delete Material</button>
+            </div>
+            <div class="col">
+                <button type="button" class="submit-btn btn btn-primary w-100">Save Changes</button>
             </div>
         </div>
     </form>
@@ -126,20 +149,14 @@
 
 <div class="row align-items-center mt-2" id="materialFinish_row_temp" style="display:none;">
     <div class="col">
-        <select class="material_id form-control" name="material_id">
-            <option value="" disabled selected>Select Material</option>
-            {% for material in materials %}
-            <option value="{{material.material_id}}">{{material.material_name}}</option>
-            {% endfor %}
-        </select>
-        <!--input type="text" class="finish_name form-control" name="accessory_unit" placeholder="Material Name"-->
+        <input type="text" class="finish_name form-control" name="accessory_unit" placeholder="Finish Name">
     </div>
     <div class="col">
-        <input type="number" class="material_cost form-control" data-product-pk="" name="material_cost"
+        <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
             placeholder="Additional Rate">
     </div>
     <div class="col-1">
-        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row">
+        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row"> &times
         </button>
     </div>
 </div>
@@ -300,26 +317,26 @@
                 isValid = false;
             }
         
-            // Validate Material Finishes - defo the error is here
+            // Validate Material Finishes
             $(".materialFinish_row").each(function() {
                 let row = $(this);
-                let material_in = row.find(".material_id").val()
-                let material_cost = row.find(".material_cost").val()
+                let finish_name = row.find(".finish_name").val()
+                let finish_cost = row.find(".finish_cost").val()
         
-                if (!material_id) {
-                    row.find(".material_id").addClass("is-invalid");
+                if (!finish_name) {
+                    row.find(".finish_name").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!material_cost) {
-                    row.find(".material_cost").addClass("is-invalid");
+                if (!finish_cost) {
+                    row.find(".finish_cost").addClass("is-invalid");
                     isValid = false;
                 }
         
                 // Add only valid data
-                if (material_id && material_cost) {
+                if (finish_name && finish_cost) {
                     finish_data.push({
-                        'material_id': material_id,
-                        'material_cost': material_cost,
+                        'finish_name': finish_name,
+                        'finish_cost': finish_cost,
                     });
                 }
             });
@@ -332,13 +349,13 @@
         
             // Prepare Data
             let submit_data = {
-                'product_id': product_id,
-                'product_name': product_name,
-                'product_category': product_category,
-                'product_margin': product_margin,
-                'product_labor': product_labor,
+                'material_id': material_id,
+                'material_name': material_name,
+                'material_cost': material_cost,
+                'material_type': material_type,
+                'material_unit': material_unit,
                 'supplier': material_supplier,
-                'pm_data': JSON.stringify(pm_data),
+                'finish_data': JSON.stringify(finish_data),
                 "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
             };
         
@@ -359,6 +376,43 @@
                 },
                 error: function(xhr, textStatus, errorThrown) {
                     alert("Something broke");
+                }
+            });
+        });
+
+        $(".submit-delete").click(function() {
+            let material_id = $(this).data("material-id");
+        
+            if (!confirm("Are you sure you want to delete this material?")) {
+                return;
+            }
+        
+            // Prepare Data
+            let delete_data = {
+                "material_id": material_id,
+                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
+                "action": "delete",
+            };
+        
+            console.log("Deleting material:", delete_data);
+        
+            // Send AJAX Request
+            $.ajax({
+                method: "post",
+                url: "/materials/",  // Adjust this URL based on your Django endpoint
+                data: delete_data,
+                success: function(data) {
+                    console.log(data);
+                    if (data["status"]) {
+                        alert("Material deleted successfully.");
+                        window.location = data["url"];
+                    } else {
+                        alert("Failed to delete material: " + data["error"]);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert("Something went wrong.");
+                    console.error(xhr.responseText);
                 }
             });
         });

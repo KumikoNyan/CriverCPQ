@@ -30,8 +30,4 @@ urlpatterns = [
     path('materials/', views.material_list, name='material_list'),
     path('materials/<int:material_id>/', views.material_detail, name='material_detail'),
     path('materials/create_material/', views.create_material, name='create_material'),
-    
-    # material finish
-    path('materials/finishes/', views.material_finish_list, name='material_finish_list'),
-    path('materials/finishes/<int:finish_id>/', views.material_finish_detail, name='material_finish_detail'),
 ]

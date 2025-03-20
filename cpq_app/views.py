@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
@@ -139,17 +139,155 @@ def delete_material(material_id):
     material_object = Material.objects.get(material_id=material_id)
     material_object.delete()
 
-# product
+# product views
+def delete_product(product_id):
+    product_object = Product.objects.get(product_id=product_id)
+    product_object.delete()
+
 def product_list(request):
     products = Product.objects.all()
-    
-    return render(request, 'cpq_app/product_list.html', {"products": products})
+    suppliers = Supplier.objects.all()
+    supplier_count = len(suppliers) or 0
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("action") == "delete":
+            product_id = request.POST.get("product_id")
+            delete_product(product_id)
+            response['url'] = reverse('product_list')
+            print(response)
+            return JsonResponse(response)
+
+        elif request.POST.get("supplier_data"):
+            for supplier in json.loads(request.POST.get("supplier_data")):
+                print(supplier)
+                supplier_operations(supplier)
+            response['url'] = reverse('product_list')
+            print(response)
+            return JsonResponse(response)
+
+    return render(request, 'cpq_app/product_list.html', {"products": products, 'suppliers': suppliers, 'supplier_count': supplier_count})
+
+def product_detail(request, product_id):
+    product_object = Product.objects.get(product_id=product_id)
+    product_material_object = ProductMaterial.objects.filter(product=product, material=material)
+    suppliers = Supplier.objects.all()
+    supplier_count = len(suppliers) or 0
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("action") == "delete":
+            product_id = request.POST.get("product_id")
+            delete_product(product_id)
+            response['url'] = reverse('product_list')
+            print(response)
+            return JsonResponse(response)
+
+        else:
+            if request.POST.get("supplier_data"):
+                for supplier in json.loads(request.POST.get("supplier_data")):
+                    print(supplier)
+                    supplier_operations(supplier)
+                response['url'] = reverse('create_product')
+                print(response)
+                return JsonResponse(response)
+
+            else:
+                product_id = request.POST.get("product_id")
+                product_name = request.POST.get("product_name")
+                product_category = request.POST.get("product_category")
+                product_margin = request.POST.get("product_margin")
+                product_labor = request.POST.get("product_labor")
+                supplier_id = request.POST.get("supplier")
+                pm_data = json.loads(request.POST.get("pm_data", "[]"))
+
+                product = get_object_or_404(Product, product_id=product_id)
+                product.product_name = product_name
+                product.product_category = product_category
+                product.product_margin = product_margin
+                product.product_labor = product_labor
+                product.supplier = get_object_or_404(Supplier, supplier_id=supplier_id)
+                product.save()
+
+                ProductMaterial.objects.filter(product=product, material=material).delete()
+
+                pm_data = json.loads(request.POST.get("pm_data"))
+                if pm_data:
+                    for pm in pm_data:
+                        material_id = pm["material_id"]
+                        material = get_object_or_404(Material, material_id=material_id)
+                        material_name = material.material_name
+                        material_quantity = pm["material_quantity"]
+                        scale_by_height = pm["scale_by_height"]
+                        scale_by_length = pm["scale_by_length"]
+                        scale_ratio = pm["scale_ratio"]
+
+                    # was thinking a dropdown would be here for the materials
+                    # access the ID of the material
+                    # since this wont be an input field for products
+
+                response['url'] = reverse('product_list')
+                return JsonResponse(response)
+    return render(request, 'cpq_app/product_detail.html', {'product_object': product_object, 'product_material_object': product_material_object, 'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def create_product(request):
     materials = Material.objects.all()
-    material_data = []
     suppliers = Supplier.objects.all()
-    return render(request, 'cpq_app/create_product.html', {"materials": material_data, "suppliers": suppliers})
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("supplier_data"):
+            for supplier in json.loads(request.POST.get("supplier_data")):
+                print(supplier)
+                supplier_operations(supplier)
+            response['url'] = reverse('create_product')
+            print(response)
+            return JsonResponse(response)
+
+        else:
+            product_id = request.POST.get("product_id")
+            product_name = request.POST.get("product_name")
+            product_category = request.POST.get("product_category")
+            product_margin = request.POST.get("product_margin")
+            product_labor = request.POST.get("product_labor")
+            supplier_id = request.POST.get("supplier")
+            supplier = Supplier.objects.get(supplier_id=supplier_id)
+
+            new_product = Product.objects.create(product_name=product_name, 
+            product_category=product_category, 
+            product_margin=product_margin, 
+            product_labor=product_labor, 
+            supplier=supplier)
+
+            pm_data = json.loads(request.POST.get("pm_data"))
+            if pm_data:
+                for pm in pm_data:
+                    material_id = pm["material_id"]
+                    material = get_object_or_404(Material, material_id=material_id)
+                    material_name = material.material_name
+                    material_quantity = pm["material_quantity"]
+                    scale_by_height = pm["scale_by_height"]
+                    scale_by_length = pm["scale_by_length"]
+                    scale_ratio = pm["scale_ratio"]
+
+                    # was thinking a dropdown would be here for the materials
+                    # access the ID of the material
+                    # since this wont be an input field for products
+
+            response['url'] = reverse('product_list')
+            print(response)
+            return JsonResponse(response)
+    return render(request, 'cpq_app/create_product.html', {"materials": materials, "suppliers": suppliers})
+
 # material views
 def material_list(request):
     materials = Material.objects.all()
@@ -254,7 +392,11 @@ def create_material(request):
             supplier_id = request.POST.get("supplier")
             supplier = Supplier.objects.get(supplier_id=supplier_id)
 
-            new_material = Material.objects.create(material_name=material_name, material_cost=material_cost, material_type=material_type, material_unit=material_unit, supplier=supplier)
+            new_material = Material.objects.create(material_name=material_name, 
+            material_cost=material_cost, 
+            material_type=material_type, 
+            material_unit=material_unit, 
+            supplier=supplier)
 
             finish_data = json.loads(request.POST.get("finish_data"))
             if finish_data:
@@ -268,19 +410,6 @@ def create_material(request):
             print(response)
             return JsonResponse(response)
     return render(request, 'cpq_app/create_material.html', {'suppliers': suppliers, 'supplier_count': supplier_count})
-
-# material finish views
-def material_finish_list(request):
-    finishes = list(MaterialFinish.objects.values())
-    return JsonResponse({"finishes": finishes})
-
-def material_finish_detail(request, finish_id):
-    finish = get_object_or_404(MaterialFinish, pk=finish_id)
-    return JsonResponse({"finish": {
-        "id": finish.id,
-        "name": finish.finish_name,
-        "price": finish.finish_price
-    }})
 
 # quotation status tracking
 def update_quotation_status(request, quotation_id, status):
