@@ -71,15 +71,15 @@
         <div class="row">
             <div class="col">
                 <label for="name">Product ID</label>
-                <input type="text" class="material_id form-control" value="" readonly>
+                <input type="text" class="product_id form-control" value="" readonly>
             </div>
             <div class="col">
                 <label for="name">Name</label>
-                <input type="text" class="material_name form-control" id="name" name="name" placeholder="Product Name">
+                <input type="text" class="product_name form-control" id="product_name" name="name" placeholder="Product Name">
             </div>
             <div class="col">
                 <label for="type">Category</label>
-                <select class="material_type form-select" id="type" name="type">
+                <select class="product_type form-select" id="type" name="type">
                     <option value="window">Window</option>
                     <option value="door">Door</option>
                     <option value="enclosure">Enclosure</option>
@@ -284,13 +284,31 @@
         
             $(".form-control, .form-select").removeClass("is-invalid");
 
-            let material_id = $(".material_id").val();
-            let material_name = $(".material_name").val();
-            let material_cost = $(".material_cost").val();
-            let material_type = $(".material_type").val();
-            let material_unit = $(".material_unit").val();
-            let material_supplier = $(".supplier").val();
-        
+            let product_id = $(".product_id").val();
+            let product_name = $(".product_name").val();
+            let product_category = $(".product_category").val();
+            let product_margin = $(".product_margin").val();
+            let product_labor = $(".product_labor").val();
+            let supplier = $(".supplier").val();
+            
+            if (!product_name) {
+                $(".product_name").addClass("is-invalid");
+                isValid = false;
+            }
+            if (!product_category) {
+                $(".product_category").addClass("is-invalid");
+                isValid = false;
+            }
+
+            if (!product_margin) {
+                $(".product_margin").addClass("is-invalid");
+                isValid = false;
+            }
+            if (!product_labor) {
+                $(".product_labor").addClass("is-invalid");
+                isValid = false;
+            }
+
             if (!material_name) {
                 $(".material_name").addClass("is-invalid");
                 isValid = false;
@@ -306,7 +324,7 @@
                 let material_in = row.find(".material_id").val()
                 let material_cost = row.find(".material_cost").val()
         
-                if (!material_id) {
+                if (!material_in) {
                     row.find(".material_id").addClass("is-invalid");
                     isValid = false;
                 }
@@ -343,7 +361,7 @@
             };
         
             console.log(submit_data);
-        
+            console.log(1);
             // Submit Data via AJAX
             $.ajax({
                 method: "post",
