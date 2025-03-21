@@ -6,6 +6,7 @@ A Configure, Price, and Quote (CPQ) system for our client Criver Glass &amp; Alu
   - Add this to your ```PATH```
 - Python packages
   - ```Django```
+- ```jquery-3.7.1.min.js```
 - Optional: [Visual Studio Code](https://code.visualstudio.com/download)
 - Optional: [Github Desktop](https://desktop.github.com/download/)
 
