@@ -17,9 +17,6 @@
                 <span class="fs-4">Customers</span>
             </a>
             <a href="{% url 'add_customer' %}" class="btn btn-primary ms-3">Add Customer</a>
-            <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
-                Suppliers
-            </button>
         </div>
     
         <!-- Right-aligned search form -->
@@ -32,7 +29,6 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="myModalLabel">Suppliers</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -75,16 +71,20 @@
                 </tr>
             </thead>
             <tbody>
-                {% for product in products %}
+                {% for customer in customers %}
                 <tr>
-                    <td>{{product.product_id}}</td>
-                    <td>{{product.supplier}}</td>
-                    <td>{{product.product_name}}</td>
-                    <td>{{product.product_category|capfirst}}</td>
-                    <td>cost</td>
-                    <td><button type="button" class="submit-delete btn btn-primary" data-product-id="{{product.product_id}}">Delete</button>
-                        <a href="{% url 'product_detail' product_id=product.product_id %}" class="btn btn-primary">Edit</a>
+                    <td>{{customer.customer_id}}</td>
+                    <td>{{customer.customer_name}}</td>
+                    <td>{{customer.customer_address}}</td>
+                    <td>{{customer.customer_mobile}}</td>
+                    <td>{{customer.customer_email}}</td>
+                    <td><button type="button" class="submit-delete btn btn-primary" data-customer-id="{{customer.customer_id}}">Delete</button>
+                        <a href="{% url 'customer_detail' customer_id=customer.customer_id %}" class="btn btn-primary">Edit</a>
                     </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No Customers Found.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -92,7 +92,7 @@
     </div>
 </div>
 
-<div class="row mt-2 align-items-center" id="supplier_row_temp" style="display:none;"> 
+<!--div class="row mt-2 align-items-center" id="supplier_row_temp" style="display:none;"> 
     <div class="col">
         <input type="text" class="supplier_id form-control" value="" placeholder="Supplier ID" readonly>
     </div>
@@ -103,136 +103,46 @@
         <button type="button" class="btn btn-close delete-supplier" data-row-id="supplier_row">
         </button>
     </div>
-</div>
+</div-->
 
 <script>
-    $(document).ready(function () {
-        rowCounter_addFinish = 0;
-        const supplier_container = $('.supplier_container');
-        const addSupplier_button = $('#addSupplier');
-        const supplier_template = $('#supplier_row_temp');
-        
-        function addSupplier(button) {
-            counter = button.data('counter');
-            counter++;
+$(document).ready(function () {
+    $(".submit-delete").click(function () {
+        let customer_id = $(this).data("customer-id");
 
-            let newRow = supplier_template.clone();
-            newRow.addClass("supplier_row");
-            newRow.attr('id', 'supplier_row' + counter);
-            newRow.find('.supplier_id').val('');
-            newRow.find('.supplier_name').val('');
-
-            newRow.find('.delete-supplier').attr('data-row-id', 'supplier_row' + counter)
-
-            newRow.show()
-            supplier_container.append(newRow);
-            
-            button = button.data('counter', counter)
+        if (!confirm("Are you sure you want to delete this customer?")) {
+            return;
         }
-        addSupplier_button.on('click', function () {
-            console.log('works')
-            let button = $(this);
-            addSupplier(button);
-        });
-        $(document).on('click', '.delete-supplier', function () {
-            let rowId = $(this).data('row-id');
-            let row = $('#' + rowId);
-            console.log(rowId);
 
-            let nameElement = row.find('.supplier_name');
-            nameElement.val('delete').change();
-            console.log(nameElement);
-            row.hide();
-        });
-        $(".submit-supplier").click(function() {
-            console.log('works')
-            let isValid = true;
-            supplier_data = [];
-            // Validate Material Finishes
-            $(".supplier_row").each(function() {
-                let row = $(this);
-                let supplier_id = row.find(".supplier_id").val()
-                let supplier_name = row.find(".supplier_name").val()
+        // Prepare Data
+        let delete_data = {
+            "customer_id": customer_id,
+            "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
+            "action": "delete",
+        };
 
-                if (!supplier_name) {
-                    row.find(".supplier_name").addClass("is-invalid");
-                    isValid = false;
-                }
-        
-                // Add only valid data
-                if (supplier_name) {
-                    supplier_data.push({
-                        'supplier_id': supplier_id,
-                        'supplier_name': supplier_name,
-                    });
-                }
-            });
-        
-            // Prepare Data
-            let submit_data = {
-                'supplier_data': JSON.stringify(supplier_data),
-                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
-            };
-        
-            console.log(submit_data);
-        
-            // Submit Data via AJAX
-            $.ajax({
-                method: "post",
-                data: submit_data,
-                success: function(data) {
-                    console.log(data["status"]);
-                    console.log(data);
-                    if (data["status"]) {
-                        window.location = data["url"];
-                    } else {
-                        alert(data["error"]);
-                    }
-                },
-                error: function(xhr, textStatus, errorThrown) {
-                    alert("Something broke");
-                }
-            });
-        });
+        console.log("Attempting to delete customer:", delete_data);
 
-        $(".submit-delete").click(function() {
-            let material_id = $(this).data("material-id");
-        
-            if (!confirm("Are you sure you want to delete this material?")) {
-                return;
-            }
-        
-            // Prepare Data
-            let delete_data = {
-                "material_id": material_id,
-                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
-                "action": "delete",
-            };
-        
-            console.log("Deleting material:", delete_data);
-        
-            // Send AJAX Request
-            $.ajax({
-                method: "post",
-                url: "/materials/",  // Adjust this URL based on your Django endpoint
-                data: delete_data,
-                success: function(data) {
-                    console.log(data);
-                    if (data["status"]) {
-                        alert("Material deleted successfully.");
-                        window.location = data["url"];
-                    } else {
-                        alert("Failed to delete material: " + data["error"]);
-                    }
-                },
-                error: function(xhr, textStatus, errorThrown) {
-                    alert("Something went wrong.");
-                    console.error(xhr.responseText);
+        // Send AJAX Request
+        $.ajax({
+            type: "POST",
+            url: "/customers/", 
+            data: delete_data,
+            success: function (data) {
+                console.log(data);
+                if (data["status"]) {
+                    alert("Customer deleted successfully.");
+                    window.location.reload();
+                } else {
+                    alert("Failed to delete customer: " + (data["error"] || "Unknown error."));
                 }
-            });
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                alert("Something went wrong. Check the console for details.");
+                console.error("Error:", xhr.responseText);
+            },
         });
-        
-        
-    })
+    });
+});
 </script>
 {% endblock %}

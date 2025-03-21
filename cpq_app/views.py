@@ -106,7 +106,7 @@ def get_quotation_items(request, quotation_id):
 
 # customer views
 def customer_list(request):
-    customer = Customer.objects.all()
+    customers = Customer.objects.all()
 
     if request.method == "POST":
         response = {}
@@ -115,14 +115,14 @@ def customer_list(request):
 
         if request.POST.get("action") == "delete":
             customer_id = request.POST.get("customer_id")
-            delete_customer(customer_id)
+            delete_customer(request)
             response['url'] = reverse('customer_list') 
             print(response)
             return JsonResponse(response)
-    return render(request, 'cpq_app/customer_list.html', {"customer": customer})
+    return render(request, 'cpq_app/customer_list.html', {"customers": customers})
 
 def customer_detail(request, customer_id):
-    customer_object = Customer.objects.get(customer_id=customer_id)
+    customer_object = get_object_or_404(Customer, customer_id=customer_id)
 
     if request.method == "POST":
         response = {}
@@ -131,7 +131,7 @@ def customer_detail(request, customer_id):
 
         if request.POST.get("action") == "delete":
             customer_id = request.POST.get("customer_id")
-            delete_customer(customer_id)
+            delete_customer(customer_id) # customer_id works here for some reason instead of request
             response['url'] = reverse('customer_list') 
             print(response)
             return JsonResponse(response)
@@ -155,7 +155,7 @@ def customer_detail(request, customer_id):
     return render(request, 'cpq_app/customer_detail.html', {'customer_object': customer_object})
 
 def add_customer(request):
-    customer = Customer.objects.all()
+    customers = Customer.objects.all()
 
     if request.method == "POST":
         response = {}
@@ -167,6 +167,9 @@ def add_customer(request):
         customer_mobile = request.POST.get("customer_mobile")
         customer_email = request.POST.get("customer_email")
 
+        if Customer.objects.filter(customer_email=customer_email).exists():
+            return JsonResponse({"status": False, "error": "Customer with this email already exists."}, status=400)
+            
         new_customer = Customer.objects.create(customer_name=customer_name,
         customer_address=customer_address,
         customer_mobile=customer_mobile,
@@ -175,11 +178,15 @@ def add_customer(request):
         response['url'] = reverse('customer_list')
         print(response)
         return JsonResponse(response)
-    return render(request, 'cpq_app/add_customer.html', {'customer': customer})
+    return render(request, 'cpq_app/add_customer.html', {'customers': customers})
 
 def delete_customer(request):
-    customer_object = Customer.objects.get(customer_id=customer_id)
-    customer_object.delete()
+    if request.method == "POST":
+        customer_id = request.POST.get("customer_id")
+        customer_object = get_object_or_404(Customer, customer_id=customer_id)
+        customer_object.delete()
+        return JsonResponse({"status": True, "message": "Customer deleted successfully."})
+    return JsonResponse({"status": False, "message": "Invalid Request"}, status=400)
 
 # product views
 def delete_product(product_id):
