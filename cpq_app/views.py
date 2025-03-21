@@ -106,33 +106,80 @@ def get_quotation_items(request, quotation_id):
 
 # customer views
 def customer_list(request):
-    return render(request, 'cpq_app/customer_list.html')
+    customer = Customer.objects.all()
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("action") == "delete":
+            customer_id = request.POST.get("customer_id")
+            delete_customer(customer_id)
+            response['url'] = reverse('customer_list') 
+            print(response)
+            return JsonResponse(response)
+    return render(request, 'cpq_app/customer_list.html', {"customer": customer})
 
 def customer_detail(request, customer_id):
-    pass
+    customer_object = Customer.objects.get(customer_id=customer_id)
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("action") == "delete":
+            customer_id = request.POST.get("customer_id")
+            delete_customer(customer_id)
+            response['url'] = reverse('customer_list') 
+            print(response)
+            return JsonResponse(response)
+        
+        else:
+            customer_id = request.POST.get("customer_id")
+            customer_name = request.POST.get("customer_name")
+            customer_address = request.POST.get("customer_address")
+            customer_mobile = request.POST.get("customer_mobile")
+            customer_email = request.POST.get("customer_email")
+
+            customer = get_object_or_404(Customer, customer_id=customer_id)
+            customer.customer_name = customer_name
+            customer.customer_address = customer_address
+            customer.customer_mobile = customer_mobile
+            customer.customer_email = customer_email
+            customer.save()
+
+            response['url'] = reverse('customer_list')
+            return JsonResponse(response)
+    return render(request, 'cpq_app/customer_detail.html', {'customer_object': customer_object})
 
 def add_customer(request):
-    pass
+    customer = Customer.objects.all()
 
-def supplier_operations(supplier):
-    supplier_id = supplier["supplier_id"]
-    supplier_name = supplier["supplier_name"]
-    if supplier_name == "delete":
-        print('delete!')
-        if supplier_id:
-            Supplier.objects.filter(supplier_id=supplier_id).delete()
-    elif supplier_id:
-        print('edit!')
-        supplier_object = Supplier.objects.get(supplier_id=supplier_id)
-        supplier_object.supplier_name = supplier_name
-        supplier_object.save()
-    else:
-        new_supplier = Supplier.objects.create(supplier_name = supplier_name)
-    return True
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
 
-def delete_material(material_id):
-    material_object = Material.objects.get(material_id=material_id)
-    material_object.delete()
+        customer_name = request.POST.get("customer_name")
+        customer_address = request.POST.get("customer_address")
+        customer_mobile = request.POST.get("customer_mobile")
+        customer_email = request.POST.get("customer_email")
+
+        new_customer = Customer.objects.create(customer_name=customer_name,
+        customer_address=customer_address,
+        customer_mobile=customer_mobile,
+        customer_email=customer_email)
+
+        response['url'] = reverse('customer_list')
+        print(response)
+        return JsonResponse(response)
+    return render(request, 'cpq_app/add_customer.html', {'customer': customer})
+
+def delete_customer(request):
+    customer_object = Customer.objects.get(customer_id=customer_id)
+    customer_object.delete()
 
 # product views
 def delete_product(product_id):
@@ -434,6 +481,26 @@ def create_material(request):
             print(response)
             return JsonResponse(response)
     return render(request, 'cpq_app/create_material.html', {'suppliers': suppliers, 'supplier_count': supplier_count})
+
+def supplier_operations(supplier):
+    supplier_id = supplier["supplier_id"]
+    supplier_name = supplier["supplier_name"]
+    if supplier_name == "delete":
+        print('delete!')
+        if supplier_id:
+            Supplier.objects.filter(supplier_id=supplier_id).delete()
+    elif supplier_id:
+        print('edit!')
+        supplier_object = Supplier.objects.get(supplier_id=supplier_id)
+        supplier_object.supplier_name = supplier_name
+        supplier_object.save()
+    else:
+        new_supplier = Supplier.objects.create(supplier_name = supplier_name)
+    return True
+
+def delete_material(material_id):
+    material_object = Material.objects.get(material_id=material_id)
+    material_object.delete()
 
 # quotation status tracking
 def update_quotation_status(request, quotation_id, status):
