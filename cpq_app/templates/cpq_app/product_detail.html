@@ -147,16 +147,24 @@
     </form>
 </div>
 
-<div class="row align-items-center mt-2" id="materialFinish_row_temp" style="display:none;">
+<div class="row align-items-center mt-2" id="productMaterial_row_temp" style="display:none;">
     <div class="col">
-        <input type="text" class="finish_name form-control" name="accessory_unit" placeholder="Finish Name">
-    </div>
-    <div class="col">
-        <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
+        <input type="number" class="material_id form-control"
             placeholder="Additional Rate">
     </div>
+    <div class="col">
+        <input type="number" class="material_quantity form-control"
+            placeholder="Additional Rate">
+    </div>
+    <div class="col">
+        <select class="material_scale form-select">
+            <option value="by_height">Height</option>
+            <option value="by_length">Width</option>
+            <option value="by_none">None</option>
+        </select>
+    </div>
     <div class="col-1">
-        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row"> &times
+        <button type="button" class="btn btn-close btn-delete delete-materialProduct" data-row-id="materialFinish_row">
         </button>
     </div>
 </div>

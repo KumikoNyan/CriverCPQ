@@ -350,13 +350,20 @@ def create_product(request):
             if pm_data:
                 for pm in pm_data:
                     material_id = pm["material_id"]
-                    material = get_object_or_404(Material, material_id=material_id)
-                    material_name = material.material_name
                     material_quantity = pm["material_quantity"]
-                    scale_by_height = pm["scale_by_height"]
-                    scale_by_length = pm["scale_by_length"]
+                    material_scale = pm["material_scale"]
                     scale_ratio = pm["scale_ratio"]
 
+                    material = get_object_or_404(Material, material_id=material_id)
+
+                    if material_scale == 'by_height':
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
+                    elif material_scale == "by_length":
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_length=True, scale_ratio=scale_ratio)
+                    else:
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_ratio=scale_ratio)
+
+                    print(new_pm)
                     # was thinking a dropdown would be here for the materials
                     # access the ID of the material
                     # since this wont be an input field for products
@@ -364,7 +371,7 @@ def create_product(request):
             response['url'] = reverse('product_list')
             print(response)
             return JsonResponse(response)
-    return render(request, 'cpq_app/create_product.html', {"materials": materials, "suppliers": suppliers})
+    return render(request, 'cpq_app/create_product.html', {"materials": materials, "suppliers": suppliers, "material_data": material_data_by_suppliers})
 
 # material views
 def material_list(request):

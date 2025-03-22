@@ -138,7 +138,7 @@
             placeholder="Additional Rate">
     </div>
     <div class="col-1">
-        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row"> &times
+        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row">
         </button>
     </div>
 </div>
@@ -304,7 +304,10 @@
                 let row = $(this);
                 let finish_name = row.find(".finish_name").val()
                 let finish_cost = row.find(".finish_cost").val()
-        
+                
+                if (finish_name === "delete") {
+                    return; 
+                }
                 if (!finish_name) {
                     row.find(".finish_name").addClass("is-invalid");
                     isValid = false;

@@ -16,7 +16,7 @@
         <div class="d-flex align-items-center">
             <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none">
                 <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-                <span class="fs-4">Product Material</span>
+                <span class="fs-4">Products</span>
             </a>
             <button type="button" class="ms-3 align-items-center btn btn-primary" data-bs-toggle="modal" data-bs-target="#suppliers">
                 Suppliers
@@ -79,7 +79,7 @@
             </div>
             <div class="col">
                 <label for="type">Category</label>
-                <select class="product_type form-select" id="type" name="type">
+                <select class="product_category form-select" id="type" name="type">
                     <option value="window">Window</option>
                     <option value="door">Door</option>
                     <option value="enclosure">Enclosure</option>
@@ -109,9 +109,9 @@
         <hr>
 
         <h4> Product Materials </h4>  
-        <div class="finish_container">
+        <div class="material_container">
         </div>
-        <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish">Add Row</button>
+        <button type="button" class="btn btn-secondary mt-2 addMaterial" id="addMaterial">Add Row</button>
 
         <div class="row pt-3 mt-3">
             <div class="col-6">
@@ -124,22 +124,34 @@
     </form>
 </div>
 
-<div class="row align-items-center mt-2" id="materialFinish_row_temp" style="display:none;">
+
+<div class="row align-items-center mt-2" id="productMaterial_row_temp" style="display:none;">
     <div class="col">
-        <select class="material_id form-control" name="material_id">
+        <select class="material_id form-select" name="material_id">
             <option value="" disabled selected>Select Material</option>
+            <option value="delete" hidden></option>
             {% for material in materials %}
             <option value="{{material.material_id}}">{{material.material_name}}</option>
             {% endfor %}
         </select>
-        <!--input type="text" class="finish_name form-control" name="accessory_unit" placeholder="Material Name"-->
     </div>
     <div class="col">
-        <input type="number" class="material_cost form-control" data-product-pk="" name="material_cost"
-            placeholder="Additional Rate">
+        <input type="number" class="material_quantity form-control"
+            placeholder="Quantity">
+    </div>
+    <div class="col">
+        <select class="material_scale form-select">
+            <option value="by_height">Height</option>
+            <option value="by_length">Width</option>
+            <option value="by_none">None</option>
+        </select>
+    </div>
+    <div class="col-2">
+        <input type="number" class="scale_ratio form-control"
+            placeholder="Scale Ratio">
     </div>
     <div class="col-1">
-        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row">
+        <button type="button" class="btn btn-close btn-delete delete-productMaterial" data-row-id="productMaterial_row">
         </button>
     </div>
 </div>
@@ -157,32 +169,50 @@
     </div>
 </div>
 
+<div class="material_dropdown_templates" style="display:none;">
+{% for supplier in material_data %}
+<select class="form-select" id="material_id{{supplier.supplier_id}}">
+    <option value="" disabled selected>Select Material</option>
+    <option value="delete" hidden></option>
+    {% for material in supplier.materials %}
+    <option value="{{material.material_id}}">{{material.material_name}}</option>
+    {% endfor %}
+</select>
+{% endfor %}
+</div>
 
 <script>
+
     $(document).ready(function () {
-        rowCounter_addFinish = 0;
-        const finish_container = $('.finish_container');
-        const finish_template = $('#materialFinish_row_temp');
-        const addFinish_button = $('#addFinish');
+        rowCounter_addMaterial = 0;
         const material_container = $('.material_container');
+        const material_template = $('#productMaterial_row_temp');
+        const addMaterial_button = $('#addMaterial');
         const supplier_container = $('.supplier_container');
         const addSupplier_button = $('#addSupplier');
         const supplier_template = $('#supplier_row_temp');
+
+        const supplier_dropdown = $('#supplier')
         
-        function addFinish() {
-            rowCounter_addFinish++;
-
-            let newRow = finish_template.clone();
-            newRow.addClass("materialFinish_row");
-            newRow.attr('id', 'materialFinish_row' + rowCounter_addFinish);
-            newRow.find('.finish_name').val('');
-            newRow.find('.finish_cost').val('');
-
-            newRow.find('.delete-materialFinish').attr('data-row-id', 'materialFinish_row' + rowCounter_addFinish)
-
-            newRow.show()
-            finish_container.append(newRow);
+        function addMaterial() {
+            rowCounter_addMaterial++;
+        
+            let newRow = $('#productMaterial_row_temp').clone();
+            
+            newRow.attr('id', 'productMaterial_row' + rowCounter_addMaterial);
+            newRow.addClass("productMaterial_row");
+            newRow.find('.material_id').val('');
+            newRow.find('.material_quantity').val('');
+            newRow.find('.material_scale').val('by_none');
+            newRow.find('.scale_ratio').val('');
+            
+            newRow.find('.delete-productMaterial').attr('data-row-id', 'productMaterial_row' + rowCounter_addMaterial);
+            
+            newRow.show();
+            material_container.append(newRow);
+            console.log("created row: " + newRow.attr('id'))
         }
+        
         function addSupplier(button) {
             counter = button.data('counter');
             counter++;
@@ -200,23 +230,26 @@
             
             button = button.data('counter', counter)
         }
-        addFinish_button.on('click', function () {
+        addMaterial_button.on('click', function () {
             let button = $(this);
-            addFinish();
+            console.log("works")
+            addMaterial();
         });
         addSupplier_button.on('click', function () {
             console.log('works')
             let button = $(this);
             addSupplier(button);
         });
-        $(document).on('click', '.delete-materialFinish', function () {
+        $(document).on('click', '.delete-productMaterial', function () {
             let rowId = $(this).data('row-id');
             let row = $('#' + rowId);
 
-            let nameElement = row.find('.finish_name');
+            let idElement = row.find('.material_id');
             
-            nameElement.val('delete').change();
+            idElement.val('delete');
             row.hide();
+            console.log("deleted row: " + row.attr('id'))
+            console.log(idElement.val())
         });
         $(document).on('click', '.delete-supplier', function () {
             let rowId = $(this).data('row-id');
@@ -228,11 +261,29 @@
             console.log(nameElement);
             row.hide();
         });
+        supplier_dropdown.on('change', function () {
+            var supplier_id = $(this).val(); // Get selected supplier ID
+
+            if (supplier_id) {
+
+                let dropdown_template = $('#material_id' + supplier_id);
+
+                let cloned_dropdown = dropdown_template.clone(); 
+                cloned_dropdown.removeAttr('id'); 
+                cloned_dropdown.addClass('material_id');
+                cloned_dropdown.show(); 
+
+                // Update all material dropdowns with class "material_id"
+                $('.material_id').each(function () {
+                    $(this).replaceWith(cloned_dropdown.clone()); // Replace all instances
+                });
+            
+            }
+        });
         $(".submit-supplier").click(function() {
-            console.log('works')
             let isValid = true;
             supplier_data = [];
-            // Validate Material Finishes
+            // Validate Material materiales
             $(".supplier_row").each(function() {
                 let row = $(this);
                 let supplier_id = row.find(".supplier_id").val()
@@ -280,7 +331,7 @@
         });
         $(".submit-btn").click(function() {
             let isValid = true;
-            let finish_data = [];
+            let material_data = [];
         
             $(".form-control, .form-select").removeClass("is-invalid");
 
@@ -290,54 +341,72 @@
             let product_margin = $(".product_margin").val();
             let product_labor = $(".product_labor").val();
             let supplier = $(".supplier").val();
-            
+
             if (!product_name) {
+                console.log("Product name is missing");
                 $(".product_name").addClass("is-invalid");
                 isValid = false;
             }
             if (!product_category) {
+                console.log("Product category is missing");
                 $(".product_category").addClass("is-invalid");
                 isValid = false;
             }
-
             if (!product_margin) {
+                console.log("Product margin is missing");
                 $(".product_margin").addClass("is-invalid");
                 isValid = false;
             }
             if (!product_labor) {
+                console.log("Product labor is missing");
                 $(".product_labor").addClass("is-invalid");
                 isValid = false;
             }
+            if (!supplier) {
+                console.log("Supplier is missing");
+                $(".supplier").addClass("is-invalid");
+                isValid = false;
+            }
 
-            if (!material_name) {
-                $(".material_name").addClass("is-invalid");
-                isValid = false;
-            }
-            if (!material_cost) {
-                $(".material_cost").addClass("is-invalid");
-                isValid = false;
-            }
         
-            // Validate Material Finishes - defo the error is here
-            $(".materialFinish_row").each(function() {
+            $(".productMaterial_row").each(function() {
                 let row = $(this);
-                let material_in = row.find(".material_id").val()
-                let material_cost = row.find(".material_cost").val()
-        
-                if (!material_in) {
+                console.log(row.attr('id'))
+                let material_id = row.find(".material_id").val()
+                let material_quantity = row.find(".material_quantity").val()
+                let material_scale = row.find(".material_scale").val()
+                let scale_ratio = row.find(".scale_ratio").val()
+
+                console.log(material_id)
+
+                if (material_id === "delete") {
+                    return; 
+                }
+
+                if (!material_id) {
                     row.find(".material_id").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!material_cost) {
-                    row.find(".material_cost").addClass("is-invalid");
+                if (!material_quantity) {
+                    row.find(".material_quantity").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!material_scale) {
+                    row.find(".material_scale").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!scale_ratio) {
+                    row.find(".scale_ratio").addClass("is-invalid");
                     isValid = false;
                 }
         
                 // Add only valid data
-                if (material_id && material_cost) {
-                    finish_data.push({
+                if (material_id && material_quantity && material_scale && scale_ratio) {
+                    material_data.push({
                         'material_id': material_id,
-                        'material_cost': material_cost,
+                        'material_quantity': material_quantity,
+                        'material_scale': material_scale,
+                        'scale_ratio': scale_ratio,
                     });
                 }
             });
@@ -355,13 +424,12 @@
                 'product_category': product_category,
                 'product_margin': product_margin,
                 'product_labor': product_labor,
-                'supplier': material_supplier,
-                'pm_data': JSON.stringify(pm_data),
+                'supplier': supplier,
+                'pm_data': JSON.stringify(material_data),
                 "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
             };
         
             console.log(submit_data);
-            console.log(1);
             // Submit Data via AJAX
             $.ajax({
                 method: "post",
