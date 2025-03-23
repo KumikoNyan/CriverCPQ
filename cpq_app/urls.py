@@ -37,3 +37,13 @@ urlpatterns = [
     path('about/', views.about, name='about')
 
 ]
+
+#READ ME
+# we will be changing the default to start at the login screen when we get to it
+# All users will be visible in the url through an additional format /u/<str:account_name>
+# For all the obfuscated data, we do the following format
+#                        {% if Account.access_level == "Admin" %}
+#                        {{data.unobfuscated_data}}
+#                        <!---{% else %}---->
+#                        <!--- XXXXX.XX ------>
+#                        <!---{% endif %} ---->

@@ -81,7 +81,16 @@
                     <td>{{material.supplier.supplier_name}}</td>
                     <td>{{material.material_name}}</td>
                     <td>{{material.material_type|capfirst}}</td>
-                    <td>{{material.material_cost}}</td>
+                    <td>
+                        
+                        <!---{% if Account.access_level %}--Remove the comments when merging, add =="Admin" or do .is_admin instead---->
+                        {{material.material_cost}}
+                        <!---{% else %}---->
+                        <!--- XXXXX.XX ------>
+                        <!---{% endif %} ---->
+
+
+                    </td>
                     <td><button type="button" class="submit-delete btn btn-primary" data-material-id="{{material.material_id}}">Delete</button>
                         <a href="{% url 'material_detail' material_id=material.material_id %}" class="btn btn-primary">Edit</a>
                     </td>

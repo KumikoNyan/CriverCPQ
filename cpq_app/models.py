@@ -18,7 +18,7 @@ class Account(models.Model):
     account_name = models.CharField(max_length=255)
     account_password = models.CharField(max_length=255)
     date_created = models.DateTimeField(auto_now_add=True)
-    access_level = models.CharField(max_length=50) # should contain the access level for the current logged in user
+    access_level = models.CharField(max_length=10, choices=[('admin', 'Admin'), ('user', 'User')], default='user') # should contain the access level for the current logged in user
 
     def __str__(self):
         return self.account_name
