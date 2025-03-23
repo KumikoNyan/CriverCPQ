@@ -250,14 +250,18 @@ def product_detail(request, product_id):
             supplier_id = request.POST.get("supplier")
             supplier = Supplier.objects.get(supplier_id=supplier_id)
 
-            new_product = Product.objects.create(product_name=product_name, 
-            product_category=product_category, 
-            product_margin=product_margin, 
-            product_labor=product_labor, 
-            supplier=supplier)
+            product = Product.objects.get(product_id = product_id)
+            product.product_name = product_name
+            product.product_category = product_category
+            product.product_margin = product_margin
+            product.product_labor = product_labor
+            product.supplier = supplier
+            
+            product.save()
 
             pm_data = json.loads(request.POST.get("pm_data"))
             if pm_data:
+                ProductMaterial.objects.filter(product=product).delete()
                 for pm in pm_data:
                     material_id = pm["material_id"]
                     material_quantity = pm["material_quantity"]
@@ -267,11 +271,11 @@ def product_detail(request, product_id):
                     material = get_object_or_404(Material, material_id=material_id)
 
                     if material_scale == 'by_height':
-                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
+                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
                     elif material_scale == "by_length":
-                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_length=True, scale_ratio=scale_ratio)
+                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_length=True, scale_ratio=scale_ratio)
                     else:
-                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_ratio=scale_ratio)
+                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_ratio=scale_ratio)
 
                     print(new_pm)
 
