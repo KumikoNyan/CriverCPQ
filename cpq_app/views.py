@@ -222,102 +222,12 @@ def product_list(request):
 
 def product_detail(request, product_id):
     product_object = Product.objects.get(product_id=product_id)
-    product_material_object = ProductMaterial.objects.filter(product=product, material=material)
+    product_material_object = ProductMaterial.objects.filter(product=product_object)
     suppliers = Supplier.objects.all()
     supplier_count = len(suppliers) or 0
-
-    if request.method == "POST":
-        response = {}
-        response['status'] = True
-        print(request.POST)
-
-        if request.POST.get("action") == "delete":
-            product_id = request.POST.get("product_id")
-            delete_product(product_id)
-            response['url'] = reverse('product_list')
-            print(response)
-            return JsonResponse(response)
-
-        else:
-            if request.POST.get("supplier_data"):
-                for supplier in json.loads(request.POST.get("supplier_data")):
-                    print(supplier)
-                    supplier_operations(supplier)
-                response['url'] = reverse('create_product')
-                print(response)
-                return JsonResponse(response)
-
-            else:
-                product_id = request.POST.get("product_id")
-                product_name = request.POST.get("product_name")
-                product_category = request.POST.get("product_category")
-                product_margin = request.POST.get("product_margin")
-                product_labor = request.POST.get("product_labor")
-                supplier_id = request.POST.get("supplier")
-                pm_data = json.loads(request.POST.get("pm_data", "[]"))
-
-                product = get_object_or_404(Product, product_id=product_id)
-                product.product_name = product_name
-                product.product_category = product_category
-                product.product_margin = product_margin
-                product.product_labor = product_labor
-                product.supplier = get_object_or_404(Supplier, supplier_id=supplier_id)
-                product.save()
-
-                ProductMaterial.objects.filter(product=product, material=material).delete()
-
-                pm_data = json.loads(request.POST.get("pm_data"))
-                if pm_data:
-                    for pm in pm_data:
-                        material_id = pm["material_id"]
-                        material = get_object_or_404(Material, material_id=material_id)
-                        material_name = material.material_name
-                        material_quantity = pm["material_quantity"]
-                        scale_by_height = pm["scale_by_height"]
-                        scale_by_length = pm["scale_by_length"]
-                        scale_ratio = pm["scale_ratio"]
-
-                    # was thinking a dropdown would be here for the materials
-                    # access the ID of the material
-                    # since this wont be an input field for products
-
-                response['url'] = reverse('product_list')
-                return JsonResponse(response)
-    return render(request, 'cpq_app/product_detail.html', {'product_object': product_object, 'product_material_object': product_material_object, 'suppliers': suppliers, 'supplier_count': supplier_count})
-
-def create_product(request):
-    materials = Material.objects.all()
-    suppliers = Supplier.objects.all()
-
-    material_data_by_suppliers = []
-    for supplier in suppliers:
-        temp_supplier = {
-            "supplier_id": supplier.supplier_id,
-            "supplier_name": supplier.supplier_name,
-            "materials": []
-        }
-        supplier_materials = supplier.material_set.all()
-        for material in supplier_materials:
-            temp_material = {
-                "material_id": material.material_id,
-                "material_name": material.material_name,
-                "material_type": material.material_type,
-                "material_unit": material.material_unit,
-                "material_cost": material.material_cost,
-                "material_finishes": [],
-            }
-            finishes = material.materialfinish_set.all()
-            for finish in finishes:
-                temp_material["material_finishes"].append({
-                    "finish_id": finish.finish_id,
-                    "finish_name": finish.finish_name,
-                    "finish_cost": finish.finish_cost,
-                })
-            temp_supplier["materials"].append(temp_material)
-        material_data_by_suppliers.append(temp_supplier)
-
+    material_data_by_suppliers = get_material_data_by_suppliers(suppliers)
+    selected_supplier_data = get_material_data_by_suppliers(suppliers, supplier_id=product_object.supplier.supplier_id)
     
-    print(material_data_by_suppliers)
     if request.method == "POST":
         response = {}
         response['status'] = True
@@ -364,9 +274,64 @@ def create_product(request):
                         new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_ratio=scale_ratio)
 
                     print(new_pm)
-                    # was thinking a dropdown would be here for the materials
-                    # access the ID of the material
-                    # since this wont be an input field for products
+
+            response['url'] = reverse('product_list')
+            print(response)
+            return JsonResponse(response)
+    return render(request, 'cpq_app/product_detail.html', {'product': product_object, 'product_materials': product_material_object, 'material_data': material_data_by_suppliers, 'suppliers': suppliers, 'supplier_count': supplier_count, 'selected_supplier_pm_data': selected_supplier_data})
+
+def create_product(request):
+    materials = Material.objects.all()
+    suppliers = Supplier.objects.all()
+
+    material_data_by_suppliers = get_material_data_by_suppliers(suppliers)
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        print(request.POST)
+
+        if request.POST.get("supplier_data"):
+            for supplier in json.loads(request.POST.get("supplier_data")):
+                print(supplier)
+                supplier_operations(supplier)
+            response['url'] = reverse('create_product')
+            print(response)
+            return JsonResponse(response)
+
+        else:
+            product_id = request.POST.get("product_id")
+            product_name = request.POST.get("product_name")
+            product_category = request.POST.get("product_category")
+            product_margin = request.POST.get("product_margin")
+            product_labor = request.POST.get("product_labor")
+            supplier_id = request.POST.get("supplier")
+            supplier = Supplier.objects.get(supplier_id=supplier_id)
+
+            new_product = Product.objects.create(product_name=product_name, 
+            product_category=product_category, 
+            product_margin=product_margin, 
+            product_labor=product_labor, 
+            supplier=supplier)
+
+            pm_data = json.loads(request.POST.get("pm_data"))
+            if pm_data:
+                for pm in pm_data:
+                    material_id = pm["material_id"]
+                    material_quantity = pm["material_quantity"]
+                    material_scale = pm["material_scale"]
+                    scale_ratio = pm["scale_ratio"]
+
+                    material = get_object_or_404(Material, material_id=material_id)
+
+                    if material_scale == 'by_height':
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
+                    elif material_scale == "by_length":
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_length=True, scale_ratio=scale_ratio)
+                    else:
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_ratio=scale_ratio)
+
+                    print(new_pm)
 
             response['url'] = reverse('product_list')
             print(response)
@@ -511,6 +476,64 @@ def supplier_operations(supplier):
     else:
         new_supplier = Supplier.objects.create(supplier_name = supplier_name)
     return True
+
+def get_material_data_by_suppliers(suppliers, supplier_id = None):
+
+    if supplier_id:
+        supplier = Supplier.objects.get(supplier_id=supplier_id)
+        material_data_by_suppliers = {
+            "supplier_id": supplier.supplier_id,
+            "supplier_name": supplier.supplier_name,
+            "materials": []
+        }
+        supplier_materials = supplier.material_set.all()
+        for material in supplier_materials:
+            temp_material = {
+                "material_id": material.material_id,
+                "material_name": material.material_name,
+                "material_type": material.material_type,
+                "material_unit": material.material_unit,
+                "material_cost": material.material_cost,
+                "material_finishes": [],
+            }
+            finishes = material.materialfinish_set.all()
+            for finish in finishes:
+                temp_material["material_finishes"].append({
+                    "finish_id": finish.finish_id,
+                    "finish_name": finish.finish_name,
+                    "finish_cost": finish.finish_cost,
+                })
+            material_data_by_suppliers["materials"].append(temp_material)
+    else:
+        material_data_by_suppliers = []
+        for supplier in suppliers:
+            temp_supplier = {
+                "supplier_id": supplier.supplier_id,
+                "supplier_name": supplier.supplier_name,
+                "materials": []
+            }
+            supplier_materials = supplier.material_set.all()
+            for material in supplier_materials:
+                temp_material = {
+                    "material_id": material.material_id,
+                    "material_name": material.material_name,
+                    "material_type": material.material_type,
+                    "material_unit": material.material_unit,
+                    "material_cost": material.material_cost,
+                    "material_finishes": [],
+                }
+                finishes = material.materialfinish_set.all()
+                for finish in finishes:
+                    temp_material["material_finishes"].append({
+                        "finish_id": finish.finish_id,
+                        "finish_name": finish.finish_name,
+                        "finish_cost": finish.finish_cost,
+                    })
+                temp_supplier["materials"].append(temp_material)
+            material_data_by_suppliers.append(temp_supplier)
+
+    print(material_data_by_suppliers)
+    return material_data_by_suppliers
 
 def delete_material(material_id):
     material_object = Material.objects.get(material_id=material_id)
