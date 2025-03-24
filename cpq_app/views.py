@@ -5,15 +5,35 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
 from collections import defaultdict
+from django.contrib import messages
+
+#login view
+def login(request):
+    if(request.method=="POST"):
+        
+        username = request.POST.get('userlogin')
+        password = request.POST.get('pwlogin')
+        account = Account.objects.filter(account_name=username, account_password=password)
+
+        if(account.exists()):
+            return redirect(f'quotations/{account.first().account_name}') #Verify if the account pk should be the customer? may be annoying to fix
+        else:
+            messages.error(request, "Invalid login")
+            return render(request, 'cpq_app/login.html')
+            
+    else:
+        return render(request, 'cpq_app/login.html')
+
 
 # Change welcome message later or remove if not needed
 def index(request):
     return JsonResponse({"message": "Welcome Bitch!"})
 
 # quotation views
-def quotation_list(request):
+def quotation_list(request, account_name):
+    user = get_object_or_404(Account, account_name=account_name)
     quotations = list(Quotation.objects.values())
-    return render(request, 'cpq_app/quotations_list.html', {"quotations": quotations})
+    return render(request, 'cpq_app/quotations_list.html', {"quotations": quotations, "user" : user})
 
 def quotation_detail(request, quotation_id):
     quotation = get_object_or_404(Quotation, pk=quotation_id)

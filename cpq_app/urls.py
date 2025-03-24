@@ -2,10 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.material_list, name='index'),
+    path('', views.login, name='index'),
     
     # quotation URLs
-    path('quotations/', views.quotation_list, name='quotation_list'),
+    path('quotations/<str:account_name>/', views.quotation_list, name='quotation_list'),
     path('quotations/<int:quotation_id>/', views.quotation_detail, name='quotation_detail'),
     path('quotations/create/', views.create_quotation, name='create_quotation'),
     path('quotations/<int:quotation_id>/version/', views.create_quotation_version, name='create_quotation_version'),
