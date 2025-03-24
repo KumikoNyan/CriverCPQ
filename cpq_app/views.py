@@ -13,7 +13,7 @@ def index(request):
 # quotation views
 def quotation_list(request):
     quotations = list(Quotation.objects.values())
-    return render(request, 'cpq_app/quotations_list.html', {"quotations": quotations})
+    return render(request, 'cpq_app/quotation_list.html', {"quotations": quotations})
 
 def quotation_detail(request, quotation_id):
     quotation = get_object_or_404(Quotation, pk=quotation_id)
@@ -28,6 +28,7 @@ def quotation_detail(request, quotation_id):
 # ideally, this should create a quotation
 @csrf_exempt # not sure if this was the right way, i just skimmed on the tapas project back in msys22
 def create_quotation(request):
+    customers = Customer.objects.all()
     if request.method == "POST":
         data = json.loads(request.body)
         customer = get_object_or_404(Customer, pk=data['customer_id'])
@@ -38,6 +39,7 @@ def create_quotation(request):
             is_active_version=True
         )
         return JsonResponse({"message": "Quotation created successfully", "quotation_id": quotation.id})
+    return render(request, 'cpq_app/create_quotation.html', {'customers': customers})
 
 # quotation versioning
 @csrf_exempt
