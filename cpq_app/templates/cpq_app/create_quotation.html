@@ -27,38 +27,38 @@
 </header>
 
 <div class="product_container container d-flex justify-content-center">
-    <form method="POST" style="width:100%;"> {% csrf_token %}   
+    <form method="POST" style="width:90%;"> {% csrf_token %}   
         <h4> Quotation Attributes </h4>    
-        <div class="row">
-            <div class="col">
-                <label for="name">Name</label>
-                <input type="text" class="product_name form-control" id="product_name" name="name" placeholder="Product Name">
+        <div class="row justify-content-between m-1">
+            <div class="col-5">
+                <div class="row mt-1">
+                    <label for="name">Customer</label>
+                    <select class="customer" id="customer_select">
+                        {% for customer in customers %}
+                        <option value="{{customer.customer_id}}">{{customer.customer_name}}</option>
+                        {% endfor %}
+                        <option value="delete" hidden></option>
+                    </select>
+                </div>
+                <div class="row mt-1">
+                    <label for="name">Address</label>
+                    <input type="text" class="customer_address form-control" placeholder="Product Name">
+                </div>
+                <div class="row mt-1">
+                    <label for="name">Mobile Number</label>
+                    <input type="text" class="customer_mobile form-control" placeholder="Product Name">
+                </div>
+                <div class="row mt-1">
+                    <label for="name">Email Address</label>
+                    <input type="text" class="customer_email form-control" placeholder="Product Name">
+                </div>
             </div>
-            <div class="col">
+            <div class="col-5">
                 <label for="type">Category</label>
                 <select class="product_category form-select" id="type" name="type">
                     <option value="window">Window</option>
                     <option value="door">Door</option>
                     <option value="enclosure">Enclosure</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="row pt-3">
-            <div class="col">
-                <label for="margin">Margin</label>
-                <input type="number" class="product_margin form-control" name="product_margin" placeholder="Margin">
-            </div>
-            <div class="col">
-                <label for="labor">Labor Margin</label>
-                <input type="number" class="product_labor form-control" name="product_labor" placeholder="Labor Margin">
-            </div>
-            <div class="col">
-                <label for="supplier">Supplier</label>
-                <select class="supplier form-select" id="supplier" name="supplier">
-                    {% for supplier in suppliers %}
-                    <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
-                    {% endfor %}
                 </select>
             </div>
         </div>
@@ -407,6 +407,11 @@
                     alert("Something broke");
                 }
             });
+        });
+        $('#customer_select').select2({
+            theme: 'bootstrap-5',
+            placeholder: "Select Customer",
+            allowClear: true
         });
         
     })
