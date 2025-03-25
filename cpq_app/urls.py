@@ -17,6 +17,7 @@ urlpatterns = [
     path('products/create_product/', views.create_product, name='create_product'),
     path('products/<int:product_id>/bom/', views.get_bill_of_materials, name='get_bill_of_materials'),
     path('products/<int:product_id>/', views.product_detail, name='product_detail'),
+    path('get_products/', views.get_products, name='get_products'),
     
     # quotation item
     path('quotations/<int:quotation_id>/items/add/', views.add_quotation_item, name='add_quotation_item'),
@@ -26,6 +27,7 @@ urlpatterns = [
     path('customers/', views.customer_list, name='customer_list'),
     path('customers/<int:customer_id>/', views.customer_detail, name='customer_detail'),
     path('customers/add_customer/', views.add_customer, name='add_customer'),
+    path('get_customer/', views.get_customer, name='get_customer'),
     
     # material
     path('materials/', views.material_list, name='material_list'),

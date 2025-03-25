@@ -67,7 +67,7 @@ class ProductMaterial(models.Model):
     material = models.ForeignKey(Material, on_delete=models.CASCADE)
     material_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     scale_by_height = models.BooleanField(default=False)
-    scale_by_length = models.BooleanField(default=False)
+    scale_by_width = models.BooleanField(default=False)
     scale_ratio = models.DecimalField(max_digits=5, decimal_places=2)
 
     def __str__(self):

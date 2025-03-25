@@ -26,268 +26,151 @@
     </div>    
 </header>
 
-<div class="product_container container d-flex justify-content-center">
+<div class="container d-flex justify-content-center">
     <form method="POST" style="width:90%;"> {% csrf_token %}   
         <h4> Quotation Attributes </h4>    
-        <div class="row justify-content-between m-1">
-            <div class="col-5">
-                <div class="row mt-1">
+            <div class="row">
+                <div class="col">
                     <label for="name">Customer</label>
-                    <select class="customer" id="customer_select">
+                    <select class="customer w-100" id="customer_select">\
+                        <option value="" selected disabled>Select a Customer</option>
                         {% for customer in customers %}
                         <option value="{{customer.customer_id}}">{{customer.customer_name}}</option>
                         {% endfor %}
                         <option value="delete" hidden></option>
                     </select>
                 </div>
-                <div class="row mt-1">
+                <div class="col">
                     <label for="name">Address</label>
-                    <input type="text" class="customer_address form-control" placeholder="Product Name">
+                    <input type="text" class="customer_address form-control" placeholder="Address" readonly>
                 </div>
-                <div class="row mt-1">
+                <div class="col">
+                    <label for="name">Project</label>
+                    <input type="text" class="project form-control" placeholder="Project">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
                     <label for="name">Mobile Number</label>
-                    <input type="text" class="customer_mobile form-control" placeholder="Product Name">
+                    <input type="text" class="customer_mobile form-control" placeholder="Mobile Number" readonly>
                 </div>
-                <div class="row mt-1">
+                <div class="col">
                     <label for="name">Email Address</label>
-                    <input type="text" class="customer_email form-control" placeholder="Product Name">
+                    <input type="text" class="customer_email form-control" placeholder="Email Address" readonly>
                 </div>
             </div>
-            <div class="col-5">
-                <label for="type">Category</label>
-                <select class="product_category form-select" id="type" name="type">
-                    <option value="window">Window</option>
-                    <option value="door">Door</option>
-                    <option value="enclosure">Enclosure</option>
-                </select>
-            </div>
-        </div>
 
         <hr>
 
-        <h4> Product Materials </h4>  
-        <div class="material_container">
+        <h4> Quotation Items </h4>  
+        <div class="item_container">
         </div>
-        <button type="button" class="btn btn-secondary mt-2 addMaterial" id="addMaterial">Add Row</button>
+        <button type="button" class="btn btn-secondary mt-2 addItem" id="addItem">Add Item</button>
 
         <div class="row pt-3 mt-3">
             <div class="col-6">
                 <a href="{% url 'product_list' %}" class="btn btn-secondary w-100">Cancel</a>
             </div>
             <div class="col-6">
-                <button type="button" class="submit-btn btn btn-primary w-100">Add Product</button>
+                <button type="button" class="submit-btn btn btn-primary w-100">Create Quote</button>
             </div>
         </div>
     </form>
 </div>
 
-
-<div class="row align-items-center mt-2" id="productMaterial_row_temp" style="display:none;">
-    <div class="col">
-        {% with first_supplier=material_data.0 %}
-            <select class="material_id form-select" id="material_id{{ first_supplier.supplier_id }}">
-                <option value="" disabled selected>Select Material</option>
-                <option value="delete" hidden></option>
-                {% for material in first_supplier.materials %}
-                    <option value="{{ material.material_id }}">{{ material.material_name }}</option>
+<div id="quoteItem_row_temp" style="display:none;">
+    <div class="row">
+        <div class="col">
+            <select class="supplier form-select" id="supplier" name="supplier">
+                <option value="" selected disabled>Select a Supplier</option>
+                {% for supplier in suppliers %}
+                <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
                 {% endfor %}
             </select>
-        {% endwith %}
-
+        </div>
+        <div class="col">
+            <select class="product_id form-select" id="">
+                <option value="" disabled selected>Select Product</option>
+                <option value="delete" hidden></option>
+            </select>
+        </div>
+        <div class="col">
+            <button type="button" class="btn btn-primary bom">See Bill of Materials</button>
+        </div>
+        <div class="col-1">
+            <button type="button" class="btn btn-close btn-delete delete-quoteItem" data-row-id="quoteItem_row">
+            </button>
+        </div>
     </div>
-    <div class="col">
-        <input type="number" class="material_quantity form-control"
-            placeholder="Quantity">
-    </div>
-    <div class="col">
-        <select class="material_scale form-select">
-            <option value="by_height">Height</option>
-            <option value="by_length">Length</option>
-            <option value="by_none">None</option>
-        </select>
-    </div>
-    <div class="col-2">
-        <input type="number" class="scale_ratio form-control"
-            placeholder="Scale Ratio">
-    </div>
-    <div class="col-1">
-        <button type="button" class="btn btn-close btn-delete delete-productMaterial" data-row-id="productMaterial_row">
-        </button>
+    <div class="row align-items-center mt-2">
+        <div class="col">
+            <input type="number" class="item_quantity form-control"
+                placeholder="Quantity">
+        </div>
+        <div class="col-5 d-flex align-items-center">
+            <input type="number" class="item_width form-control text-center" placeholder="Width" >
+            <span class="mx-2">X</span>
+            <input type="number" class="item_height form-control text-center" placeholder="Height">
+        </div>
+        <div class="col">
+            <input type="number" class="unit_price form-control"
+                placeholder="Unit Price" readonly>
+        </div>
+        <div class="col">
+            <input type="number" class="total_amount form-control"
+                placeholder="Total Amount" readonly>
+        </div>
     </div>
 </div>
 
-<div class="row mt-2 align-items-center" id="supplier_row_temp" style="display:none;"> 
-    <div class="col">
-        <input type="text" class="supplier_id form-control" value="" placeholder="Supplier ID" readonly>
-    </div>
-    <div class="col">
-        <input type="text" class="supplier_name form-control" value="" placeholder="Supplier Name">
-    </div>
-    <div class="col-1">
-        <button type="button" class="btn btn-close delete-supplier" data-row-id="supplier_row">
-        </button>
-    </div>
-</div>
 
-<div class="material_dropdown_templates" style="display:none;">
-{% for supplier in material_data %}
-<select class="form-select" id="material_id{{supplier.supplier_id}}">
-    <option value="" disabled selected>Select Material</option>
-    <option value="delete" hidden></option>
-    {% for material in supplier.materials %}
-    <option value="{{material.material_id}}">{{material.material_name}}</option>
-    {% endfor %}
-</select>
-{% endfor %}
-</div>
+
 
 <script>
 
     $(document).ready(function () {
-        rowCounter_addMaterial = 0;
-        const material_container = $('.material_container');
-        const material_template = $('#productMaterial_row_temp');
-        const addMaterial_button = $('#addMaterial');
-        const supplier_container = $('.supplier_container');
-        const addSupplier_button = $('#addSupplier');
-        const supplier_template = $('#supplier_row_temp');
+        rowCounter_addItem = 0;
+        const item_container = $('.item_container');
+        const item_template = $('#quoteItem_row_temp');
+        const addItem_button = $('#addItem');
 
-        const supplier_dropdown = $('#supplier')
+        const customer_select = $('#customer_select')
         
-        function addMaterial() {
-            rowCounter_addMaterial++;
+        function addItem() {
+            rowCounter_addItem++;
         
-            let newRow = $('#productMaterial_row_temp').clone();
+            let newRow = item_template.clone();
             
-            newRow.attr('id', 'productMaterial_row' + rowCounter_addMaterial);
-            newRow.addClass("productMaterial_row");
-            newRow.find('.material_id').val('');
-            newRow.find('.material_quantity').val('');
-            newRow.find('.material_scale').val('by_none');
-            newRow.find('.scale_ratio').val('');
+            newRow.attr('id', 'quoteItem_row' + rowCounter_addItem);
+            newRow.addClass("quoteItem_row");
             
-            newRow.find('.delete-productMaterial').attr('data-row-id', 'productMaterial_row' + rowCounter_addMaterial);
+            newRow.find('.delete-quoteItem').attr('data-row-id', 'quoteItem_row' + rowCounter_addItem);
+
+            newRow.find(".product_id").select2({ 
+                theme: "bootstrap-5",
+                placeholder: "Select Product",
+                allowClear: true
+            });
             
             newRow.show();
-            material_container.append(newRow);
+            item_container.append(newRow);
             console.log("created row: " + newRow.attr('id'))
         }
-        
-        function addSupplier(button) {
-            counter = button.data('counter');
-            counter++;
-
-            let newRow = supplier_template.clone();
-            newRow.addClass("supplier_row");
-            newRow.attr('id', 'supplier_row' + counter);
-            newRow.find('.supplier_id').val('');
-            newRow.find('.supplier_name').val('');
-
-            newRow.find('.delete-supplier').attr('data-row-id', 'supplier_row' + counter)
-
-            newRow.show()
-            supplier_container.append(newRow);
-            
-            button = button.data('counter', counter)
-        }
-        addMaterial_button.on('click', function () {
+        addItem_button.on('click', function () {
             let button = $(this);
             console.log("works")
-            addMaterial();
+            addItem();
         });
-        addSupplier_button.on('click', function () {
-            console.log('works')
-            let button = $(this);
-            addSupplier(button);
-        });
-        $(document).on('click', '.delete-productMaterial', function () {
+        $(document).on('click', '.delete-quoteItem', function () {
             let rowId = $(this).data('row-id');
             let row = $('#' + rowId);
 
-            let idElement = row.find('.material_id');
+            let idElement = row.find('.product_id');
             
             idElement.val('delete');
             row.hide();
             console.log("deleted row: " + row.attr('id'))
             console.log(idElement.val())
-        });
-        $(document).on('click', '.delete-supplier', function () {
-            let rowId = $(this).data('row-id');
-            let row = $('#' + rowId);
-            console.log(rowId);
-
-            let nameElement = row.find('.supplier_name');
-            nameElement.val('delete').change();
-            console.log(nameElement);
-            row.hide();
-        });
-        supplier_dropdown.on('change', function () {
-            let supplier_id = $(this).val(); // Get selected supplier ID
-
-            if (supplier_id) {
-
-                let dropdown_template = $('#material_id' + supplier_id);
-
-                let cloned_dropdown = dropdown_template.clone(); 
-                cloned_dropdown.removeAttr('id'); 
-                cloned_dropdown.addClass('material_id');
-                cloned_dropdown.show(); 
-
-                // Update all material dropdowns with class "material_id"
-                $('.material_id').each(function () {
-                    $(this).replaceWith(cloned_dropdown.clone()); // Replace all instances
-                });
-            
-            }
-        });
-        $(".submit-supplier").click(function() {
-            let isValid = true;
-            supplier_data = [];
-            // Validate Material materiales
-            $(".supplier_row").each(function() {
-                let row = $(this);
-                let supplier_id = row.find(".supplier_id").val()
-                let supplier_name = row.find(".supplier_name").val()
-
-                if (!supplier_name) {
-                    row.find(".supplier_name").addClass("is-invalid");
-                    isValid = false;
-                }
-        
-                // Add only valid data
-                if (supplier_name) {
-                    supplier_data.push({
-                        'supplier_id': supplier_id,
-                        'supplier_name': supplier_name,
-                    });
-                }
-            });
-        
-            // Prepare Data
-            let submit_data = {
-                'supplier_data': JSON.stringify(supplier_data),
-                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
-            };
-        
-            console.log(submit_data);
-        
-            // Submit Data via AJAX
-            $.ajax({
-                method: "post",
-                data: submit_data,
-                success: function(data) {
-                    console.log(data["status"]);
-                    console.log(data);
-                    if (data["status"]) {
-                        window.location = data["url"];
-                    } else {
-                        alert(data["error"]);
-                    }
-                },
-                error: function(xhr, textStatus, errorThrown) {
-                    alert("Something broke");
-                }
-            });
         });
         $(".submit-btn").click(function() {
             let isValid = true;
@@ -295,68 +178,60 @@
         
             $(".form-control, .form-select").removeClass("is-invalid");
 
-            let product_id = $(".product_id").val();
-            let product_name = $(".product_name").val();
-            let product_category = $(".product_category").val();
-            let product_margin = $(".product_margin").val();
-            let product_labor = $(".product_labor").val();
-            let supplier = $(".supplier").val();
+            let customer_id = $(".customer").val();
+            let customer_address = $(".customer_address").val();
+            let project = $(".project").val();
+            let customer_mobile = $(".customer_mobile").val();
+            let customer_email = $(".customer_email").val();
 
-            if (!product_name) {
+            if (!customer_id) {
                 console.log("Product name is missing");
-                $(".product_name").addClass("is-invalid");
+                $(".customer").addClass("is-invalid");
                 isValid = false;
             }
-            if (!product_category) {
+            if (!project) {
                 console.log("Product category is missing");
-                $(".product_category").addClass("is-invalid");
-                isValid = false;
-            }
-            if (!product_margin) {
-                console.log("Product margin is missing");
-                $(".product_margin").addClass("is-invalid");
-                isValid = false;
-            }
-            if (!product_labor) {
-                console.log("Product labor is missing");
-                $(".product_labor").addClass("is-invalid");
-                isValid = false;
-            }
-            if (!supplier) {
-                console.log("Supplier is missing");
-                $(".supplier").addClass("is-invalid");
+                $(".project").addClass("is-invalid");
                 isValid = false;
             }
 
         
-            $(".productMaterial_row").each(function() {
+            $(".quoteItem_row").each(function() {
                 let row = $(this);
                 console.log(row.attr('id'))
-                let material_id = row.find(".material_id").val()
-                let material_quantity = row.find(".material_quantity").val()
-                let material_scale = row.find(".material_scale").val()
-                let scale_ratio = row.find(".scale_ratio").val()
+                let item_supplier = row.find(".supplier").val()
+                let product_id = row.find(".product_id").val()
+                let item_quantity = row.find(".item_quantity").val()
+                let item_width = row.find(".item_width").val()
+                let item_height = row.find(".item_height").val()
+                let unit_price = row.find(".unit_price").val()
+                let total_amount = row.find(".total_amount").val()
 
-                console.log(material_id)
 
-                if (material_id === "delete") {
+                console.log(product_id)
+
+                if (product_id === "delete") {
                     return; 
                 }
 
-                if (!material_id) {
-                    row.find(".material_id").addClass("is-invalid");
+                if (!item_supplier) {
+                    row.find(".item_supplier").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!material_quantity) {
-                    row.find(".material_quantity").addClass("is-invalid");
+                if (!item_width) {
+                    row.find(".item_width").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!material_scale) {
-                    row.find(".material_scale").addClass("is-invalid");
+                if (!item_quantity) {
+                    row.find(".item_quantity").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!scale_ratio) {
-                    row.find(".scale_ratio").addClass("is-invalid");
+                if (!item_height) {
+                    row.find(".item_height").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!product_id) {
+                    row.find(".product_id").addClass("is-invalid");
                     isValid = false;
                 }
         
@@ -408,12 +283,79 @@
                 }
             });
         });
-        $('#customer_select').select2({
+        customer_select.select2({
             theme: 'bootstrap-5',
             placeholder: "Select Customer",
-            allowClear: true
+            allowClear: true,
         });
+
         
+        customer_select.on('change', function() {
+            let customerId = $(this).val();
+            
+            if (customerId) {
+                $.ajax({
+                    url: '/get_customer',  // Replace with your actual API endpoint
+                    type: 'GET',
+                    data: { customer_id: customerId },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response) {
+                            $('.customer_address').val(response.address);
+                            $('.customer_mobile').val(response.mobile);
+                            $('.customer_email').val(response.email);
+                        } else {
+                            clearCustomerFields();
+                        }
+                    },
+                    error: function() {
+                        alert('Failed to fetch customer details.');
+                        clearCustomerFields();
+                    }
+                });
+            } else {
+                clearCustomerFields();
+            }
+        });
+    
+        function clearCustomerFields() {
+            $('.customer_address').val('');
+            $('.customer_mobile').val('');
+            $('.customer_email').val('');
+        }  
+    })
+    $(document).on("change", ".supplier", function () {
+        let supplierId = $(this).val();  // Get selected supplier ID
+        let productSelect = $(this).closest(".row").find(".product_id"); // Find the corresponding product dropdown
+        
+        console.log("Supplier changed:", supplierId);
+    
+        if (supplierId) {
+            $.ajax({
+                url: "/get_products/",  // Django endpoint
+                type: "GET",
+                data: { supplier_id: supplierId },
+                dataType: "json",
+                success: function (response) {
+                    productSelect.empty();  // Clear current options
+                    productSelect.append('<option value="" disabled selected>Select Product</option>');
+    
+                    if (response.products.length > 0) {
+                        response.products.forEach(function (product) {
+                            productSelect.append(`<option value="${product.product_id}">${product.product_name}</option>`);
+                        });
+                    } else {
+                        productSelect.append('<option value="" disabled>No Products Available</option>');
+                    }
+                },
+                error: function () {
+                    alert("Failed to fetch products. Please try again.");
+                }
+            });
+        }
+    });
+    $(document).on("click", ".bom", function () {
+        console.log('bom')
     })
 </script>
 {% endblock %}

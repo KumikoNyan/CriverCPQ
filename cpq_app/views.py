@@ -29,6 +29,8 @@ def quotation_detail(request, quotation_id):
 @csrf_exempt # not sure if this was the right way, i just skimmed on the tapas project back in msys22
 def create_quotation(request):
     customers = Customer.objects.all()
+    suppliers = Supplier.objects.all()
+
     if request.method == "POST":
         data = json.loads(request.body)
         customer = get_object_or_404(Customer, pk=data['customer_id'])
@@ -39,7 +41,7 @@ def create_quotation(request):
             is_active_version=True
         )
         return JsonResponse({"message": "Quotation created successfully", "quotation_id": quotation.id})
-    return render(request, 'cpq_app/create_quotation.html', {'customers': customers})
+    return render(request, 'cpq_app/create_quotation.html', {'customers': customers, 'suppliers': suppliers})
 
 # quotation versioning
 @csrf_exempt
@@ -64,18 +66,6 @@ def get_quotation_versions(request, quotation_id):
     versions = list(Quotation.objects.filter(id=quotation_id).values())
     return JsonResponse({"quotation_versions": versions})
 
-# BoM breakdown
-def get_bill_of_materials(request, product_id):
-    product = get_object_or_404(Product, pk=product_id)
-    materials = ProductMaterial.objects.filter(product_id=product.id)
-    bom = [{
-        "material": material.material_id,
-        "quantity": material.material_quantity,
-        "scale_by_height": material.scale_by_height,
-        "scale_by_length": material.scale_by_length,
-        "scale_ratio": material.scale_ratio
-    } for material in materials]
-    return JsonResponse({"product": product.product_name, "bill_of_materials": bom})
 
 # quotation item views
 @csrf_exempt
@@ -541,6 +531,15 @@ def get_material_data_by_suppliers(suppliers, supplier_id = None):
     print(material_data_by_suppliers)
     return material_data_by_suppliers
 
+def get_products(request):
+    supplier_id = request.GET.get("supplier_id")  # Get supplier ID from AJAX request
+    if supplier_id:
+        supplier = get_object_or_404(Supplier, supplier_id=supplier_id)
+        products = supplier.product_set.values("product_id", "product_name")  # Get product IDs and names
+        print(list(products))
+        return JsonResponse({"products": list(products)})  # Return JSON response
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
 def delete_material(material_id):
     material_object = Material.objects.get(material_id=material_id)
     material_object.delete()
@@ -552,6 +551,53 @@ def update_quotation_status(request, quotation_id, status):
     quotation.save()
     return JsonResponse({"message": "Quotation status updated", "quotation_id": quotation_id, "status": status})
 
+def get_customer(request):
+    customer_id = request.GET.get('customer_id') 
+    if customer_id:
+        customer = get_object_or_404(Customer, customer_id=customer_id)  
+        data = {
+            "address": customer.customer_address,
+            "mobile": customer.customer_mobile,
+            "email": customer.customer_email
+        }
+        return JsonResponse(data) 
+    return JsonResponse({"error": "Invalid request"}, status=400) 
+
+def calculate_product_cost(request, product_id, width, height, quantity):
+    pass
+
+# BoM breakdown
+def get_bill_of_materials(request, product_id, width, height, quantity): # need to add finishes here
+    product = get_object_or_404(Product, pk=product_id)
+    materials = ProductMaterial.objects.filter(product_id=product.id)
+    bom = []
+    for material in materials:
+        quantity = material.material_quantity,
+        scale_by_height = material.scale_by_height,
+        scale_by_width = material.scale_by_length,
+        scale_ratio = material.scale_ratio
+        cost = material.material_cost
+
+        if scale_by_height:
+            material_unit_measurement = height*scale_ratio
+        else:
+            material_unit_measurement = width*scale_ratio
+        total_quantity_measurement = material_unit_measurement*material_unit_measurement
+
+        unit_measurement_cost = material_unit_measurement*cost
+        total_measurement_cost = total_quantity_measurement*cost
+
+        bom.append({
+        "material": material.material_id,
+        "material_name": material.material_name,
+        "quantity": material.material_quantity,
+        "material_unit_measurement": material_unit_measurement,
+        "total_quantity_measurement": total_quantity_measurement,
+        "unit_measurement_cost": unit_measurement_cost,
+        "total_measurement_cost": total_measurement_cost,
+        })
+        
+    return JsonResponse({"product": product.product_name, "bom": bom})
 # misc for the faq and about
 def faq(request):
     return render(request, 'cpq_app/faq.html')
