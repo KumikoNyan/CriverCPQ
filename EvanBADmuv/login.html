@@ -1,0 +1,284 @@
+{% load static %}
+
+<style>
+    @font-face {
+        font-family: 'Outfit';
+        src: url('{% static "Outfit-Regular.ttf" %}') format('truetype');
+        font-weight: normal;
+    }
+
+    @font-face {
+        font-family: 'Outfit';
+        src: url('{% static "Outfit-Bold.ttf" %}') format('truetype');
+        font-weight: bold;
+    }
+
+    @font-face {
+        font-family: 'Outfit';
+        src: url('{% static "Outfit-Medium.ttf" %}') format('truetype');
+        font-weight: 600; /* Adjust the weight value as needed */
+    }
+
+
+    h1 {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        font-size: 24px;
+        color: black;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    .container-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Set the height of the parent container */
+        width: 100vw;
+    }
+
+    .container {
+        font-family: 'Outfit', sans-serif;
+        font-weight: normal;
+        font-size: 40px;
+        color: black;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 60vw;
+        height: 100vh;
+        background-color: #fff;
+    }
+
+    .circle {
+        height: 400px; /* Increase the height */
+        width: 400px; /* Increase the width */
+        position: absolute;
+        top: 7%; /* Center vertically */
+        left: 43%; /* Center horizontally */
+        transform: translate(-50%, -50%); /* Center the circle */
+        z-index: -1;
+        background-image: radial-gradient(circle 200px, #7EC0FF 20%, #95D7FF 40%, #BDF3F5 65%, transparent);
+    }
+
+    .circle2 {
+        height: 400px; /* Increase the height */
+        width: 400px; /* Increase the width */
+        position: absolute;
+        top: 65%; /* Center vertically */
+        left: 84%; /* Center horizontally */
+        transform: translate(-50%, -50%); /* Center the circle */
+        z-index: -1;
+        background-image: radial-gradient(circle 220px at 90% 75%, #7EC0FF 25%, #95D7FF 40%, #BDF3F5 65%, transparent);
+    }
+    
+    h1 {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 2%;
+        text-align: center;
+    }
+
+
+    label {
+        display: block;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    label {
+        width: 100px; /* Adjust the width as needed */
+        margin-right: 10px; /* Adjust the spacing between label and input */
+    }
+    
+    input[type="text"],
+    input[type="password"] {
+        flex: 1; /* Allow input fields to grow and occupy remaining space */
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+    
+    .Login-photo img{
+        width: 40vw;
+        height: 100%; /* Adjust the height as needed */
+        overflow: hidden;
+        z-index: 2;
+    }
+
+    /* .gradient1 img{
+        width: 20vw:
+        height: auto;
+        z-index: 1;
+
+    } */
+
+    /* .form-control {
+
+    } */
+
+    .sign-button {
+
+        border-radius: 10px;
+        background-color: #2688C4 !important;
+        width: 10vw;
+        height: auto;
+        border: none;
+        border-radius: 10px;
+        color: white;
+        padding: 5px 10px;
+        cursor: pointer;
+        margin-left: 33%;
+    }
+
+    .sign-button:hover{
+        background-color: #D8BFD8;
+    }
+    .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of other elements */
+  }
+  
+  .popup-message {
+    width: 60%;
+    max-width: 700px;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+  
+  .popup-message h3 {
+  color: #008000;
+  margin-bottom: 20px;
+  font-size: 24px; /* Adjust font size as needed */
+  font-weight: 600; /* Adjust font weight as needed */
+}
+
+
+</style>
+
+</head>
+<body>
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-message" id="popupMessage">
+            <h3>Error!</h3>
+            <h3 id="popupContent">Invalid username or password.</h3>
+            <button class="close-button" onclick="closePopup()">Try Again</button>
+        </div>
+    </div>
+    
+    <div class="container-wrapper">
+        <div class="Login-photo">
+            <img src="{% static 'Login.png' %}" alt='Login'>
+        </div>
+        <div class="container">
+            <img src="{% static 'Logo (2).png' %}" alt="Logo" style="width: 25vw; height: 20vh; margin-top: 10%;">
+            <h1>Sign in</h1>
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                </div>
+                <!-- <div class="form-group">
+                    <label for="user_type">User Type</label>
+                    <select class="form-control" id="user_type" name="user_type" required>
+                        <option value="OAA">Office of Admission and Aid</option>
+                        <option value="Offices/Departments">Offices/Departments</option>
+                        <option value="Scholar">Scholar</option>
+                    </select>
+                </div> -->
+                <button type="submit" class="sign-button">Sign in</button>
+            </form> 
+        </div>
+    </div>
+</body>
+<style>
+    label {
+    display: block;
+    }
+
+    input[type='submit'],
+    label {
+    margin-top: 1rem;
+    }
+    .popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of other elements */
+  }
+  
+  .popup-message {
+    width: 30%;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+  
+  .popup-message h3 {
+  color: red;
+  font-size: 24px; /* Adjust font size as needed */
+  font-weight: 600; /* Adjust font weight as needed */
+}
+
+.close-button {
+    background-color: #011196;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    color: white;
+    font-size: 14px;
+  }
+</style>
+<script>
+    // Function to show the pop-up message
+    function showPopup() {
+        document.getElementById("popupOverlay").style.display = "flex";
+    }
+
+    // Function to close the pop-up message
+    function closePopup() {
+        document.getElementById("popupOverlay").style.display = "none";
+    }
+
+    // Check if there's an error message from the server (invalid login credentials)
+    let errorMessage = "{{ error_message }}";
+    if (errorMessage) {
+        showPopup();
+    }
+</script>
