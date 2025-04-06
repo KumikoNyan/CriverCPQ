@@ -80,9 +80,13 @@
             <div class="col">
                 <label for="type">Category</label>
                 <select class="product_category form-select" id="type" name="type">
-                    <option value="window"{% if product.product_category == 'window' %}selected{%endif%}>Window</option>
-                    <option value="door"{% if product.product_category == 'door' %}selected{%endif%}>Door</option>
-                    <option value="enclosure"{% if product.product_category == 'enclosure' %}selected{%endif%}>Enclosure</option>
+                    <option value="casement_window"{% if product.product_category == 'casement_window' %}selected{%endif%}>Casement Window</option>
+                    <option value="awning_window"{% if product.product_category == 'awning_window' %}selected{%endif%}>Awning Window</option>
+                    <option value="sliding_window"{% if product.product_category == 'sliding_window' %}selected{%endif%}>Sliding Window</option>
+                    <option value="sliding_door"{% if product.product_category == 'sliding_door' %}selected{%endif%}>Sliding Door</option>
+                    <option value="swing_door"{% if product.product_category == 'swing_door' %}selected{%endif%}>Swing Door</option>
+                    <option value="shower"{% if product.product_category == 'shower' %}selected{%endif%}>Shower Enclosure</option>
+                    <option value="storefront"{% if product.product_category == 'storefront' %}selected{%endif%}>Storefront</option>
                 </select>
             </div>
         </div>
@@ -129,7 +133,7 @@
                     <select class="material_scale form-select">
                         <option value="by_none">None</option>
                         <option value="by_height" {% if prod_mat.scale_by_height == True %}selected{%endif%}>Height</option>
-                        <option value="by_length" {% if prod_mat.scale_by_length == True %}selected{%endif%}>Length</option>
+                        <option value="width" {% if prod_mat.scale_by_width == True %}selected{%endif%}>Width</option>
                     </select>
                 </div>
                 <div class="col-2">
@@ -174,7 +178,7 @@
     <div class="col">
         <select class="material_scale form-select">
             <option value="by_height">Height</option>
-            <option value="by_length">Length</option>
+            <option value="by_width">Width</option>
             <option value="by_none">None</option>
         </select>
     </div>
@@ -429,13 +433,9 @@
                     row.find(".material_scale").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!scale_ratio) {
-                    row.find(".scale_ratio").addClass("is-invalid");
-                    isValid = false;
-                }
         
                 // Add only valid data
-                if (material_id && material_quantity && material_scale && scale_ratio) {
+                if (material_id && material_quantity && material_scale) {
                     material_data.push({
                         'material_id': material_id,
                         'material_quantity': material_quantity,

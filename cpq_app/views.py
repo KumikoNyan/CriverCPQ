@@ -264,10 +264,10 @@ def product_detail(request, product_id):
 
                     if material_scale == 'by_height':
                         new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
-                    elif material_scale == "by_length":
+                    elif material_scale == "by_width":
                         new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_length=True, scale_ratio=scale_ratio)
                     else:
-                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_ratio=scale_ratio)
+                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity)
 
                     print(new_pm)
 
@@ -322,10 +322,10 @@ def create_product(request):
 
                     if material_scale == 'by_height':
                         new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
-                    elif material_scale == "by_length":
-                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_length=True, scale_ratio=scale_ratio)
+                    elif material_scale == "by_width":
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_width=True, scale_ratio=scale_ratio)
                     else:
-                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_ratio=scale_ratio)
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity)
 
                     print(new_pm)
 
@@ -387,7 +387,7 @@ def material_detail(request, material_id):
             else:
                 material_id = request.POST.get("material_id")
                 material_name = request.POST.get("material_name")
-                material_cost = request.POST.get("material_cost")
+                material_cost = request.POST.get("material_cost") or 0
                 material_type = request.POST.get("material_type")
                 material_unit = request.POST.get("material_unit")
                 supplier_id = request.POST.get("supplier")
@@ -438,11 +438,17 @@ def create_material(request):
             supplier_id = request.POST.get("supplier")
             supplier = Supplier.objects.get(supplier_id=supplier_id)
 
-            new_material = Material.objects.create(material_name=material_name, 
-            material_cost=material_cost, 
-            material_type=material_type, 
-            material_unit=material_unit, 
-            supplier=supplier)
+            if material_cost:
+                new_material = Material.objects.create(material_name=material_name, 
+                material_cost=material_cost, 
+                material_type=material_type, 
+                material_unit=material_unit, 
+                supplier=supplier)
+            else:
+                new_material = Material.objects.create(material_name=material_name, 
+                material_type=material_type, 
+                material_unit=material_unit, 
+                supplier=supplier)
 
             finish_data = json.loads(request.POST.get("finish_data"))
             if finish_data:

@@ -80,9 +80,13 @@
             <div class="col">
                 <label for="type">Category</label>
                 <select class="product_category form-select" id="type" name="type">
-                    <option value="window">Window</option>
-                    <option value="door">Door</option>
-                    <option value="enclosure">Enclosure</option>
+                    <option value="casement_window">Casement Window</option>
+                    <option value="awning_window">Awning Window</option>
+                    <option value="sliding_window">Sliding Window</option>
+                    <option value="sliding_door">Sliding Door</option>
+                    <option value="swing_door">Swing Door</option>
+                    <option value="shower">Shower Enclosure</option>
+                    <option value="storefront">Storefront</option>
                 </select>
             </div>
         </div>
@@ -145,7 +149,7 @@
     <div class="col">
         <select class="material_scale form-select">
             <option value="by_height">Height</option>
-            <option value="by_length">Length</option>
+            <option value="by_width">Width</option>
             <option value="by_none">None</option>
         </select>
     </div>
@@ -398,13 +402,9 @@
                     row.find(".material_scale").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!scale_ratio) {
-                    row.find(".scale_ratio").addClass("is-invalid");
-                    isValid = false;
-                }
-        
+
                 // Add only valid data
-                if (material_id && material_quantity && material_scale && scale_ratio) {
+                if (material_id && material_quantity && material_scale) {
                     material_data.push({
                         'material_id': material_id,
                         'material_quantity': material_quantity,

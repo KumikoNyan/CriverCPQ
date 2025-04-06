@@ -46,7 +46,7 @@ class Material(models.Model):
     material_name = models.CharField(max_length=255)
     material_type = models.CharField(max_length=255)
     material_unit = models.CharField(max_length=50)
-    material_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    material_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -68,7 +68,7 @@ class ProductMaterial(models.Model):
     material_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     scale_by_height = models.BooleanField(default=False)
     scale_by_width = models.BooleanField(default=False)
-    scale_ratio = models.DecimalField(max_digits=5, decimal_places=2)
+    scale_ratio = models.DecimalField(max_digits=5, decimal_places=2, null=True)
 
     def __str__(self):
         return f"{self.material.material_name} for {self.product.product_name}"

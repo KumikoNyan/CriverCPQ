@@ -83,7 +83,6 @@
                     <option value="glass">Glass</option>
                     <option value="aluminum">Aluminum</option>
                     <option value="accessory">Accessory</option>
-                    <option value="frame">Frame</option>
                 </select>
             </div>
         </div>
@@ -96,14 +95,14 @@
             <div class="col">
                 <label for="unit">Unit</label>
                 <select class="material_unit form-select" id="unit" name="unit">
-                    <option value="FT">per sq/ft</option>
-                    <option value="IN">per sq/in</option>
-                    <option value="M">per sq/m</option>
+                    <option value="FT">per ft</option>
+                    <option value="PC">per pc</option>
                 </select>
             </div>
             <div class="col">
                 <label for="supplier">Supplier</label>
                 <select class="supplier form-select" id="supplier" name="supplier">
+                    <option value="" disabled selected>Select Supplier</option>
                     {% for supplier in suppliers %}
                     <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
                     {% endfor %}
@@ -116,7 +115,7 @@
         <h4> Material Finishes </h4>  
         <div class="finish_container">
         </div>
-        <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish">Add Row</button>
+        <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish" data-material-type="glass">Add Row</button>
 
         <div class="row pt-3 mt-3">
             <div class="col-6">
@@ -129,9 +128,50 @@
     </form>
 </div>
 
-<div class="row align-items-center mt-2" id="materialFinish_row_temp" style="display:none;">
+<div class="row align-items-center mt-2" id="materialFinish_row_temp_glass" style="display:none;">
     <div class="col">
-        <input type="text" class="finish_name form-control" name="accessory_unit" placeholder="Finish Name">
+        <select class="finish_name form-select" id="type" name="type">
+            <option value="delete" hidden></option>
+            <option value="" disabled selected>Select Finish</option>
+            <option value="Clear">Clear</option>
+            <option value="Tempered">Tempered</option>
+            <option value="Laminated">Laminated</option>
+        </select>
+    </div>
+    <div class="col">
+        <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
+            placeholder="Rate">
+    </div>
+    <div class="col-1">
+        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row">
+        </button>
+    </div>
+</div>
+
+<div class="row align-items-center mt-2" id="materialFinish_row_temp_aluminum" style="display:none;">
+    <div class="col">
+        <select class="finish_name form-select" id="type" name="type">
+            <option value="delete" hidden></option>
+            <option value="" disabled selected>Select Finish</option>
+            <option value="Mill-Finish">Mill-Finish</option>
+            <option value="Anodized">Anodized</option>
+            <option value="Analok">Analok</option>
+            <option value="Powdercoatedd">Powdercoated</option>
+        </select>
+    </div>
+    <div class="col">
+        <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
+            placeholder="Rate">
+    </div>
+    <div class="col-1">
+        <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row">
+        </button>
+    </div>
+</div>
+
+<div class="row align-items-center mt-2" id="materialFinish_row_temp_accessory" style="display:none;">
+    <div class="col">
+        <input type="text" class="finish_name form-control" placeholder="Finish Name">
     </div>
     <div class="col">
         <input type="number" class="finish_cost form-control" data-product-pk="" name="finish_cost"
@@ -161,17 +201,27 @@
     $(document).ready(function () {
         rowCounter_addFinish = 0;
         const finish_container = $('.finish_container');
-        const finish_template = $('#materialFinish_row_temp');
         const addFinish_button = $('#addFinish');
         const material_container = $('.material_container');
         const supplier_container = $('.supplier_container');
         const addSupplier_button = $('#addSupplier');
         const supplier_template = $('#supplier_row_temp');
+        const finish_template_glass = $('#materialFinish_row_temp_glass');
+        const finish_template_aluminum = $('#materialFinish_row_temp_aluminum');
+        const finish_template_accessory = $('#materialFinish_row_temp_accessory');
         
-        function addFinish() {
-            rowCounter_addFinish++;
+        function addFinish(material_type) {
+            rowCounter_addFinish++;             
+            let newRow;
 
-            let newRow = finish_template.clone();
+            if (material_type === "glass") {
+                newRow = finish_template_glass.clone();
+            } else if (material_type === "aluminum") {
+                newRow = finish_template_aluminum.clone();
+            } else {
+                newRow = finish_template_accessory.clone();
+            }
+            console.log(newRow)
             newRow.addClass("materialFinish_row");
             newRow.attr('id', 'materialFinish_row' + rowCounter_addFinish);
             newRow.find('.finish_name').val('');
@@ -201,7 +251,7 @@
         }
         addFinish_button.on('click', function () {
             let button = $(this);
-            addFinish();
+            addFinish(button.data('material-type'));
         });
         addSupplier_button.on('click', function () {
             console.log('works')
@@ -294,10 +344,6 @@
                 $(".material_name").addClass("is-invalid");
                 isValid = false;
             }
-            if (!material_cost) {
-                $(".material_cost").addClass("is-invalid");
-                isValid = false;
-            }
         
             // Validate Material Finishes
             $(".materialFinish_row").each(function() {
@@ -364,7 +410,22 @@
                 }
             });
         });
-        
+        $(".supplier").select2({
+            theme: 'bootstrap-5',
+            placeholder: "Select Customer",
+            allowClear: true,
+        });
+        $('.material_type').change(function() {
+            // Clear the finish_container
+            console.log('entering')
+            finish_container.empty();
+            
+            // Get the selected material type
+            let material_type = $(this).val();
+            
+            addFinish_button.data("material-type", material_type)
+            console.log(addFinish_button.data('material-type'))
+        });   
     })
 </script>
 {% endblock %}
