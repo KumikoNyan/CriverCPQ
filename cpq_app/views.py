@@ -432,23 +432,17 @@ def create_material(request):
             return JsonResponse(response)
         else:
             material_name = request.POST.get("material_name")
-            material_cost = request.POST.get("material_cost")
+            material_cost = request.POST.get("material_cost") or 0
             material_type = request.POST.get("material_type")
             material_unit = request.POST.get("material_unit")
             supplier_id = request.POST.get("supplier")
             supplier = Supplier.objects.get(supplier_id=supplier_id)
 
-            if material_cost:
-                new_material = Material.objects.create(material_name=material_name, 
-                material_cost=material_cost, 
-                material_type=material_type, 
-                material_unit=material_unit, 
-                supplier=supplier)
-            else:
-                new_material = Material.objects.create(material_name=material_name, 
-                material_type=material_type, 
-                material_unit=material_unit, 
-                supplier=supplier)
+            new_material = Material.objects.create(material_name=material_name, 
+            material_cost=material_cost, 
+            material_type=material_type, 
+            material_unit=material_unit, 
+            supplier=supplier)
 
             finish_data = json.loads(request.POST.get("finish_data"))
             if finish_data:

@@ -29,41 +29,54 @@
 <div class="container d-flex justify-content-center">
     <form method="POST" style="width:90%;"> {% csrf_token %}   
         <h4> Quotation Attributes </h4>    
-            <div class="row">
-                <div class="col">
-                    <label for="name">Customer</label>
-                    <select class="customer w-100" id="customer_select">\
-                        <option value="" selected disabled>Select a Customer</option>
-                        {% for customer in customers %}
-                        <option value="{{customer.customer_id}}">{{customer.customer_name}}</option>
-                        {% endfor %}
-                        <option value="delete" hidden></option>
-                    </select>
-                </div>
-                <div class="col">
-                    <label for="name">Address</label>
-                    <input type="text" class="customer_address form-control" placeholder="Address" readonly>
-                </div>
-                <div class="col">
-                    <label for="name">Project</label>
-                    <input type="text" class="project form-control" placeholder="Project">
-                </div>
+        <div class="row">
+            <div class="col">
+                <label for="name">Customer</label>
+                <select class="customer w-100" id="customer_select">\
+                    <option value="" selected disabled>Select a Customer</option>
+                    {% for customer in customers %}
+                    <option value="{{customer.customer_id}}">{{customer.customer_name}}</option>
+                    {% endfor %}
+                    <option value="delete" hidden></option>
+                </select>
             </div>
-            <div class="row">
-                <div class="col">
-                    <label for="name">Mobile Number</label>
-                    <input type="text" class="customer_mobile form-control" placeholder="Mobile Number" readonly>
-                </div>
-                <div class="col">
-                    <label for="name">Email Address</label>
-                    <input type="text" class="customer_email form-control" placeholder="Email Address" readonly>
-                </div>
+            <div class="col">
+                <label for="name">Address</label>
+                <input type="text" class="customer_address form-control" placeholder="Address" readonly>
             </div>
-
+            <div class="col">
+                <label for="name">Project</label>
+                <input type="text" class="project form-control" placeholder="Project">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label for="name">Mobile Number</label>
+                <input type="text" class="customer_mobile form-control" placeholder="Mobile Number" readonly>
+            </div>
+            <div class="col">
+                <label for="name">Email Address</label>
+                <input type="text" class="customer_email form-control" placeholder="Email Address" readonly>
+            </div>
+        </div>
         <hr>
-
-        <h4> Quotation Items </h4>  
-        <div class="item_container">
+        <div class="row row-cols-auto">
+            <div class="col justify-content-center">
+                <h4> Quotation Items </h4>
+            </div>
+            <div class="col-3">
+            <label for="supplier_default">Default Supplier</label>
+            <select class="supplier_default form-select" id="supplier" name="supplier_default">
+                <option value="" selected disabled>Select a Supplier</option>
+                {% for supplier in suppliers %}
+                <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
+                {% endfor %}
+            </select>
+            </div>
+        </div>
+        <div class="row">  
+            <div class="item_container">
+            </div>
         </div>
         <button type="button" class="btn btn-secondary mt-2 addItem" id="addItem">Add Item</button>
 
@@ -130,40 +143,13 @@
 
 
 <script>
+    const item_container = $('.item_container');
+    rowCounter_addItem = 0;
 
     $(document).ready(function () {
-        rowCounter_addItem = 0;
-        const item_container = $('.item_container');
-        const item_template = $('#quoteItem_row_temp');
         const addItem_button = $('#addItem');
-
         const customer_select = $('#customer_select')
         
-        function addItem() {
-            rowCounter_addItem++;
-        
-            let newRow = item_template.clone();
-            
-            newRow.attr('id', 'quoteItem_row' + rowCounter_addItem);
-            newRow.addClass("quoteItem_row");
-            
-            newRow.find('.delete-quoteItem').attr('data-row-id', 'quoteItem_row' + rowCounter_addItem);
-
-            newRow.find(".product_id").select2({ 
-                theme: "bootstrap-5",
-                placeholder: "Select Product",
-                allowClear: true
-            });
-            
-            newRow.show();
-            item_container.append(newRow);
-            console.log("created row: " + newRow.attr('id'))
-        }
-        addItem_button.on('click', function () {
-            let button = $(this);
-            console.log("works")
-            addItem();
-        });
         $(document).on('click', '.delete-quoteItem', function () {
             let rowId = $(this).data('row-id');
             let row = $('#' + rowId);
@@ -328,19 +314,19 @@
         }  
     })
     $(document).on("change", ".supplier", function () {
-        let supplierId = $(this).val();  // Get selected supplier ID
-        let productSelect = $(this).closest(".row").find(".product_id"); // Find the corresponding product dropdown
+        let supplierId = $(this).val();  
+        let productSelect = $(this).closest(".row").find(".product_id"); 
         
         console.log("Supplier changed:", supplierId);
     
         if (supplierId) {
             $.ajax({
-                url: "/get_products/",  // Django endpoint
+                url: "/get_products/", 
                 type: "GET",
                 data: { supplier_id: supplierId },
                 dataType: "json",
                 success: function (response) {
-                    productSelect.empty();  // Clear current options
+                    productSelect.empty();  
                     productSelect.append('<option value="" disabled selected>Select Product</option>');
     
                     if (response.products.length > 0) {
@@ -357,8 +343,87 @@
             });
         }
     });
+    $(document).on("change", ".supplier_default", function () {
+        let supplierId = $(this).val();
+        let default_prodSelect = $('#quoteItem_row_temp').find('.product_id')
+        let default_supplier = $('#quoteItem_row_temp').find('.supplier')
+        console.log(default_supplier)
+        console.log("Default supplier changed:", supplierId);
+    
+        if (supplierId) {
+            $.ajax({
+                url: "/get_products/", 
+                type: "GET",
+                data: { supplier_id: supplierId },
+                dataType: "json",
+                success: function (response) {
+                    default_prodSelect.empty();  
+                    default_prodSelect.append('<option value="" disabled selected>Select Product</option>');
+    
+                    if (response.products.length > 0) {
+                        response.products.forEach(function (product) {
+                            default_prodSelect.append(`<option value="${product.product_id}">${product.product_name}</option>`);
+                        });
+                    } else {
+                        default_prodSelect.append('<option value="" disabled>No Products Available</option>');
+                    }
+
+                    default_supplier.val(supplierId)
+                },
+                error: function () {
+                    alert("Failed to fetch products. Please try again.");
+                }
+            });
+        }
+    });
+    $(document).on("click", "#addItem", function () {
+        let button = $(this);
+        console.log("works")
+
+        rowCounter_addItem++;
+        let item_template = $('#quoteItem_row_temp');
+        let newRow = item_template.clone();
+        
+        newRow.attr('id', 'quoteItem_row' + rowCounter_addItem);
+        newRow.addClass("quoteItem_row");
+        
+        newRow.find('.delete-quoteItem').attr('data-row-id', 'quoteItem_row' + rowCounter_addItem);
+
+        newRow.find(".product_id")
+        .append('<option value="delete" hidden></option>')
+        .select2({ 
+            theme: "bootstrap-5",
+            placeholder: "Select Product",
+            allowClear: true
+        });
+        let selectedDefaultSupplier = $('#quoteItem_row_temp').find('.supplier').val();
+        newRow.find('.supplier').val(selectedDefaultSupplier).trigger('change');
+
+        newRow.show();
+        item_container.append(newRow);
+        console.log("created row: " + newRow.attr('id'))
+    })
     $(document).on("click", ".bom", function () {
-        console.log('bom')
+        let item_row = $(this).parent().parent().parent();
+        let item_supplier = item_row.find(".supplier").val()
+        let product_id = item_row.find(".product_id").val()
+        let item_quantity = item_row.find(".item_quantity").val()
+        let item_width = item_row.find(".item_width").val()
+        let item_height = item_row.find(".item_height").val()
+        let unit_price = item_row.find(".unit_price").val()
+        let total_amount = item_row.find(".total_amount").val()
+        let itemDetails = {
+            Supplier: item_supplier,
+            ProductID: product_id,
+            Quantity: item_quantity,
+            Width: item_width,
+            Height: item_height,
+            UnitPrice: unit_price,
+            TotalAmount: total_amount
+        };
+    
+        // Log the object
+        console.log("Item Details:", itemDetails);
     })
 </script>
 {% endblock %}
