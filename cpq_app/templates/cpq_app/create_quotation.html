@@ -410,20 +410,28 @@
         let item_quantity = item_row.find(".item_quantity").val()
         let item_width = item_row.find(".item_width").val()
         let item_height = item_row.find(".item_height").val()
-        let unit_price = item_row.find(".unit_price").val()
-        let total_amount = item_row.find(".total_amount").val()
-        let itemDetails = {
-            Supplier: item_supplier,
-            ProductID: product_id,
-            Quantity: item_quantity,
-            Width: item_width,
-            Height: item_height,
-            UnitPrice: unit_price,
-            TotalAmount: total_amount
+
+        let submit_data = {
+            'product_id': product_id,
+            'item_supplier': item_supplier,
+            'item_quantity': item_quantity,
+            'item_width': item_width,
+            'item_height': item_height,
+            'csrfmiddlewaretoken': $("[name=csrfmiddlewaretoken]").val(),
         };
-    
-        // Log the object
-        console.log("Item Details:", itemDetails);
+        
+        $.ajax({
+            url: "/get_products/", 
+            type: "GET",
+            data: submit_data,
+            dataType: "json",
+            success: function (response) {
+                console.log('Success')
+            },
+            error: function () {
+                alert("Failed to fetch products. Please try again.");
+            }
+        });
     })
 </script>
 {% endblock %}

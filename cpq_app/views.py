@@ -567,28 +567,56 @@ def calculate_product_cost(request, product_id, width, height, quantity):
     pass
 
 # BoM breakdown
-def get_bill_of_materials(request, product_id, width, height, quantity): # need to add finishes here
+def get_bill_of_materials(request): # need to add finishes here
+    product_id = request.GET.get("product_id")
+    height = request.GET.get("height")
+    width = request.GET.get("width")
+    quantity = request.GET.get("item_quantity")
+
     product = get_object_or_404(Product, pk=product_id)
     materials = ProductMaterial.objects.filter(product_id=product.id)
     bom = []
     for material in materials:
         quantity = material.material_quantity,
         scale_by_height = material.scale_by_height,
-        scale_by_width = material.scale_by_length,
+        scale_by_width = material.scale_by_width,
         scale_ratio = material.scale_ratio
-        cost = material.material_cost
+        material_type = material.material.material_type
+
+        if material_type == "Accessory":
+            material_unit_measurement = 1
+            total_quantity_measurement = material_unit_measurement*quantity
+            unit_measurement_cost = material.material.material_cost
+            total_measurement_cost = total_quantity_measurement*unit_measurement_cost
+            
+        else:
+            material_finish = request.GET.get("material_finish")
+            material_obj = material.material
+            finish = MaterialFinish.objects.get(finish_name="Mill-Finish", material=material_obj)
+            if not material_finish:
+                cost = finish.finish_cost
+                if scale_by_height:
+                    material_unit_measurement = height*scale_ratio
+                else:
+                    material_unit_measurement = width*scale_ratio
+                    total_quantity_measurement = quantity*material_unit_measurement
+
+                    unit_measurement_cost = material_unit_measurement*cost
+                    total_measurement_cost = total_quantity_measurement*cost
+            else:
+                pass
 
         if scale_by_height:
             material_unit_measurement = height*scale_ratio
         else:
             material_unit_measurement = width*scale_ratio
-        total_quantity_measurement = material_unit_measurement*material_unit_measurement
+        total_quantity_measurement = quantity*material_unit_measurement
 
         unit_measurement_cost = material_unit_measurement*cost
         total_measurement_cost = total_quantity_measurement*cost
 
         bom.append({
-        "material": material.material_id,
+        "material_id": material.material_id,
         "material_name": material.material_name,
         "quantity": material.material_quantity,
         "material_unit_measurement": material_unit_measurement,
