@@ -115,9 +115,17 @@
         <h4> Product Materials </h4>  
         <div class="material_container">
             {% for prod_mat in product_materials %}
-            <div class="productMaterial_row row align-items-center mt-2" id="productMaterial_row{{prod_mat.product_material_id}}">
+            <div class="productMaterial_row row align-items-center mt-2" id="productMaterial_row{{forloop.counter}}">
                 <div class="col">
-                    <select class="material_id form-select" id="material_id{{ first_supplier.supplier_id }}">
+                    <select class="material_type form-select" id="material_type">
+                        <option value="" disabled selected>Select Material Type</option>
+                        <option value="aluminum" {% if prod_mat.material.material_type == 'aluminum' %}selected{%endif%}>Aluminum</option>
+                        <option value="glass"{% if prod_mat.material.material_type == 'glass' %}selected{%endif%}>Glass</option>
+                        <option value="accessory"{% if prod_mat.material.material_type == 'accessory' %}selected{%endif%}>Accessory</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <select class="material_id form-select" id="material_id">
                         <option value="" disabled selected>Select Material</option>
                         <option value="delete" hidden></option>
                         {% for material in selected_supplier_pm_data.materials %}
@@ -133,7 +141,7 @@
                     <select class="material_scale form-select">
                         <option value="by_none">None</option>
                         <option value="by_height" {% if prod_mat.scale_by_height == True %}selected{%endif%}>Height</option>
-                        <option value="width" {% if prod_mat.scale_by_width == True %}selected{%endif%}>Width</option>
+                        <option value="by_width" {% if prod_mat.scale_by_width == True %}selected{%endif%}>Width</option>
                     </select>
                 </div>
                 <div class="col-2">
@@ -141,13 +149,13 @@
                         value="{{prod_mat.scale_ratio}}">
                 </div>
                 <div class="col-1">
-                    <button type="button" class="btn btn-close btn-delete delete-productMaterial" data-row-id="productMaterial_row{{prod_mat.product_material_id}}">
+                    <button type="button" class="btn btn-close btn-delete delete-productMaterial" data-row-id="productMaterial_row{{forloop.counter}}">
                     </button>
                 </div>
             </div>
             {% endfor %}
         </div>
-        <button type="button" class="btn btn-secondary mt-2 addMaterial" id="addMaterial">Add Row</button>
+        <button type="button" class="btn btn-secondary mt-2 addMaterial" id="addMaterial" data-counter="{{product_materials|length}}    ">Add Row</button>
 
         <div class="row pt-3 mt-3">
             <div class="col-6">
@@ -162,6 +170,14 @@
 
 
 <div class="row align-items-center mt-2" id="productMaterial_row_temp" style="display:none;">
+    <div class="col">
+        <select class="material_type form-select" id="material_type">
+            <option value="" disabled selected>Select Material Type</option>
+            <option value="aluminum" selected>Aluminum</option>
+            <option value="glass">Glass</option>
+            <option value="accessory">Accessory</option>
+        </select>
+    </div>
     <div class="col">
         <select class="material_id form-select" id="material_id{{ first_supplier.supplier_id }}">
             <option value="" disabled selected>Select Material</option>
@@ -206,21 +222,50 @@
 </div>
 
 <div class="material_dropdown_templates" style="display:none;">
-{% for supplier in material_data %}
-<select class="form-select" id="material_id{{supplier.supplier_id}}">
-    <option value="" disabled selected>Select Material</option>
-    <option value="delete" hidden></option>
-    {% for material in supplier.materials %}
-    <option value="{{material.material_id}}">{{material.material_name}}</option>
+    {% for supplier in material_data %}
+    <select class="form-select" id="material_id{{supplier.supplier_id}}_accessory">
+        <option value="" disabled selected>Select Material</option>
+        <option value="delete" hidden></option>
+        {% for material in supplier.accessories %}
+        <option value="{{material.material_id}}">{{material.material_name}}</option>
+        {% endfor %}
+    </select>
+    
+    <select class="form-select" id="material_id{{supplier.supplier_id}}_glass">
+        <option value="" disabled selected>Select Material</option>
+        <option value="delete" hidden></option>
+        {% for material in supplier.glass %}
+        <option value="{{material.material_id}}">{{material.material_name}}</option>
+        {% endfor %}
+    </select>
+    
+    <select class="form-select" id="material_id{{supplier.supplier_id}}_aluminum">
+        <option value="" disabled selected>Select Material</option>
+        <option value="delete" hidden></option>
+        {% for material in supplier.aluminum %}
+        <option value="{{material.material_id}}">{{material.material_name}}</option>
+        {% endfor %}
+    </select>
     {% endfor %}
-</select>
-{% endfor %}
 </div>
 
 <script>
+    const supplier_dropdown = $('#supplier')
+    const default_material_type = "aluminum"
+    function materialId_update(supplier_id, material_type, row_id) {
+        let dropdown_template = $('#material_id' + supplier_id+ '_' + material_type);
 
+        let cloned_dropdown = dropdown_template.clone(); 
+        cloned_dropdown.removeAttr('id'); 
+        cloned_dropdown.addClass('material_id');
+        cloned_dropdown.show(); 
+        
+        console.log(cloned_dropdown)
+        let target_row = $('#' + row_id);
+        target_row.find('.material_id').replaceWith(cloned_dropdown);
+        
+    }
     $(document).ready(function () {
-        rowCounter_addMaterial = 0;
         const material_container = $('.material_container');
         const material_template = $('#productMaterial_row_temp');
         const addMaterial_button = $('#addMaterial');
@@ -230,23 +275,27 @@
 
         const supplier_dropdown = $('#supplier')
         
-        function addMaterial() {
-            rowCounter_addMaterial++;
+        function addMaterial(counter, button) {
+            counter++;
         
             let newRow = $('#productMaterial_row_temp').clone();
             
-            newRow.attr('id', 'productMaterial_row' + rowCounter_addMaterial);
+            newRow.attr('id', 'productMaterial_row' + counter);
             newRow.addClass("productMaterial_row");
             newRow.find('.material_id').val('');
             newRow.find('.material_quantity').val('');
             newRow.find('.material_scale').val('by_none');
             newRow.find('.scale_ratio').val('');
             
-            newRow.find('.delete-productMaterial').attr('data-row-id', 'productMaterial_row' + rowCounter_addMaterial);
-            
+            newRow.find('.delete-productMaterial').attr('data-row-id', 'productMaterial_row' + counter);
+            supplier_id = supplier_dropdown.val();
+
             newRow.show();
             material_container.append(newRow);
             console.log("created row: " + newRow.attr('id'))
+            
+            materialId_update(supplier_id, default_material_type, newRow.attr('id'))
+            button.data('counter', counter)
         }
         
         function addSupplier(button) {
@@ -268,8 +317,8 @@
         }
         addMaterial_button.on('click', function () {
             let button = $(this);
-            console.log("works")
-            addMaterial();
+            let counter = button.data('counter')
+            addMaterial(counter, button);
         });
         addSupplier_button.on('click', function () {
             console.log('works')
@@ -299,24 +348,7 @@
         });
         supplier_dropdown.on('change', function () {
             let supplier_id = $(this).val(); // Get selected supplier ID
-            console.log(supplier_id)
-            if (supplier_id) {
-
-                let dropdown_template = $('#material_id' + supplier_id);
-
-                let cloned_dropdown = dropdown_template.clone(); 
-                cloned_dropdown.removeAttr('id'); 
-                cloned_dropdown.addClass('material_id');
-                cloned_dropdown.show(); 
-
-                console.log(cloned_dropdown)
-
-                // Update all material dropdowns with class "material_id"
-                $('.material_id').each(function () {
-                    $(this).replaceWith(cloned_dropdown.clone()); // Replace all instances
-                });
-            
-            }
+            material_container.empty()
         });
         $(".submit-supplier").click(function() {
             let isValid = true;
@@ -482,7 +514,14 @@
                 }
             });
         });
-        
     })
+    $(document).on("change", ".material_type", function () {
+        let row = $(this).parent().parent();
+        let row_id = row.attr('id')
+        let material_type = $(this).val();
+        let supplier_id = supplier_dropdown.val();
+
+        materialId_update(supplier_id, material_type, row_id);
+    });
 </script>
 {% endblock %}

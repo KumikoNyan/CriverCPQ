@@ -80,6 +80,7 @@
             <div class="col">
                 <label for="type">Material Type</label>
                 <select class="material_type form-select" id="type" name="type">
+                    <option value="" disabled>Select Material Type</option>
                     <option value="glass" {% if material_object.material_type == 'glass' %}selected{%endif%}>Glass</option>
                     <option value="aluminum"{% if material_object.material_type == 'aluminum' %}selected{%endif%}>Aluminum</option>
                     <option value="accessory"{% if material_object.material_type == 'accessory' %}selected{%endif%}>Accessory</option>
@@ -97,6 +98,7 @@
                 <select class="material_unit form-select" id="unit" name="unit">
                     <option value="FT"{% if material_object.material_unit == 'FT' %}selected{%endif%}>per ft</option>
                     <option value="PC"{% if material_object.material_unit == 'PC' %}selected{%endif%}>per pc</option>
+                    <option value="PC"{% if material_object.material_unit == 'SQFT' %}selected{%endif%}>per sq/ft</option>
                 </select>
             </div>
             <div class="col">
@@ -148,14 +150,14 @@
                         value="{{finish.finish_cost}}">
                 </div>
                 <div class="col-1">
-                    <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row{{finish.finish_id}}">
+                    <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row{{forloop.counter}}">
                     </button>
                 </div>
             </div>
             {% endfor %}
         {% else %}
             {% for finish in finishes %}
-            <div class="materialFinish_row row align-items-center mt-2" id="materialFinish_row{{finish.finish_id}}">
+            <div class="materialFinish_row row align-items-center mt-2" id="materialFinish_row{{forloop.counter}}">
                 <div class="col">
                     <select class="finish_name form-select" id="type" name="type">
                         <option value="delete" hidden></option>
@@ -170,7 +172,7 @@
                         value="{{finish.finish_cost}}">
                 </div>
                 <div class="col-1">
-                    <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row{{finish.finish_id}}">
+                    <button type="button" class="btn btn-close delete-materialFinish" data-row-id="materialFinish_row{{forloop.counter}}">
                     </button>
                 </div>
             </div>
@@ -178,7 +180,7 @@
 
         {% endif %}
         </div>
-        <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish" data-material-type="{{material_object.material_type}}">Add Row</button>
+        <button type="button" class="btn btn-secondary mt-2 addFinish" id="addFinish" data-material-type="{{material_object.material_type}}" data-counter="{{finishes|length}}">Add Row</button>
 
         <div class="row pt-3 mt-3">
             <div class="col">
@@ -198,8 +200,8 @@
     <div class="col">
         <select class="finish_name form-select" id="type" name="type">
             <option value="delete" hidden></option>
-            <option value="" disabled selected>Select Finish</option>
-            <option value="Clear">Clear</option>
+            <option value="" disabled>Select Finish</option>
+            <option value="Clear" selected>Clear</option>
             <option value="Tempered">Tempered</option>
             <option value="Laminated">Laminated</option>
         </select>
@@ -218,8 +220,8 @@
     <div class="col">
         <select class="finish_name form-select" id="type" name="type">
             <option value="delete" hidden></option>
-            <option value="" disabled selected>Select Finish</option>
-            <option value="Mill-Finish">Mill-Finish</option>
+            <option value="" disabled>Select Finish</option>
+            <option value="Mill-Finish" selected>Mill-Finish</option>
             <option value="Anodized">Anodized</option>
             <option value="Analok">Analok</option>
             <option value="Powdercoatedd">Powdercoated</option>
@@ -265,7 +267,6 @@
 
 <script>
     $(document).ready(function () {
-        rowCounter_addFinish = 0;
         const finish_container = $('.finish_container');
         const addFinish_button = $('#addFinish');
         const material_container = $('.material_container');
@@ -277,8 +278,8 @@
         const finish_template_aluminum = $('#materialFinish_row_temp_aluminum');
         const finish_template_accessory = $('#materialFinish_row_temp_accessory');
         
-        function addFinish(material_type) {
-            rowCounter_addFinish++;             
+        function addFinish(material_type, counter, button) {
+            counter++;             
             let newRow;
 
             if (material_type === "glass") {
@@ -290,14 +291,12 @@
             }
             console.log(newRow)
             newRow.addClass("materialFinish_row");
-            newRow.attr('id', 'materialFinish_row' + rowCounter_addFinish);
-            newRow.find('.finish_name').val('');
-            newRow.find('.finish_cost').val('');
-
-            newRow.find('.delete-materialFinish').attr('data-row-id', 'materialFinish_row' + rowCounter_addFinish)
+            newRow.attr('id', 'materialFinish_row' + counter);
+            newRow.find('.delete-materialFinish').attr('data-row-id', 'materialFinish_row' + counter)
 
             newRow.show()
             finish_container.append(newRow);
+            button.data('counter',counter)
         }
         function addSupplier(button) {
             counter = button.data('counter');
@@ -318,7 +317,9 @@
         }
         addFinish_button.on('click', function () {
             let button = $(this);
-            addFinish(button.data('material-type'));
+            let material_type = button.data('material-type')
+            let counter = button.data('counter')
+            addFinish(material_type, counter, button);
         });
         addSupplier_button.on('click', function () {
             console.log('works')
@@ -517,14 +518,14 @@
             allowClear: true,
         });
         $('.material_type').change(function() {
-            // Clear the finish_container
-            console.log('entering')
             finish_container.empty();
             
-            // Get the selected material type
             let material_type = $(this).val();
             
             addFinish_button.data("material-type", material_type)
+            if (material_type !== "accessory") {
+                addFinish_button.trigger("click");
+            }
             console.log(addFinish_button.data('material-type'))
         });  
     })

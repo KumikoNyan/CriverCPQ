@@ -252,24 +252,26 @@ def product_detail(request, product_id):
             product.save()
 
             pm_data = json.loads(request.POST.get("pm_data"))
-            if pm_data:
-                ProductMaterial.objects.filter(product=product).delete()
-                for pm in pm_data:
-                    material_id = pm["material_id"]
-                    material_quantity = pm["material_quantity"]
-                    material_scale = pm["material_scale"]
-                    scale_ratio = pm["scale_ratio"]
+            
+            ProductMaterial.objects.filter(product=product).delete()
+            for pm in pm_data:
+                material_id = pm["material_id"]
+                material_quantity = pm["material_quantity"]
+                material_scale = pm["material_scale"]
+                scale_ratio = pm["scale_ratio"]
 
-                    material = get_object_or_404(Material, material_id=material_id)
+                print(scale_ratio)
 
-                    if material_scale == 'by_height':
-                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
-                    elif material_scale == "by_width":
-                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_length=True, scale_ratio=scale_ratio)
-                    else:
-                        new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity)
+                material = get_object_or_404(Material, material_id=material_id)
 
-                    print(new_pm)
+                if material_scale == 'by_height':
+                    new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
+                elif material_scale == "by_width":
+                    new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_width=True, scale_ratio=scale_ratio)
+                else:
+                    new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity)
+
+                print(new_pm)
 
             response['url'] = reverse('product_list')
             print(response)
@@ -474,7 +476,6 @@ def supplier_operations(supplier):
     return True
 
 def get_material_data_by_suppliers(suppliers, supplier_id = None):
-
     if supplier_id:
         supplier = Supplier.objects.get(supplier_id=supplier_id)
         material_data_by_suppliers = {
@@ -506,8 +507,11 @@ def get_material_data_by_suppliers(suppliers, supplier_id = None):
             temp_supplier = {
                 "supplier_id": supplier.supplier_id,
                 "supplier_name": supplier.supplier_name,
-                "materials": []
+                "accessories": [],
+                "glass": [],
+                "aluminum": [],
             }
+
             supplier_materials = supplier.material_set.all()
             for material in supplier_materials:
                 temp_material = {
@@ -518,6 +522,7 @@ def get_material_data_by_suppliers(suppliers, supplier_id = None):
                     "material_cost": material.material_cost,
                     "material_finishes": [],
                 }
+
                 finishes = material.materialfinish_set.all()
                 for finish in finishes:
                     temp_material["material_finishes"].append({
@@ -525,7 +530,14 @@ def get_material_data_by_suppliers(suppliers, supplier_id = None):
                         "finish_name": finish.finish_name,
                         "finish_cost": finish.finish_cost,
                     })
-                temp_supplier["materials"].append(temp_material)
+
+                # Categorize based on material_type
+                if material.material_type == "accessory":
+                    temp_supplier["accessories"].append(temp_material)
+                elif material.material_type == "glass":
+                    temp_supplier["glass"].append(temp_material)
+                elif material.material_type == "aluminum":
+                    temp_supplier["aluminum"].append(temp_material)
             material_data_by_suppliers.append(temp_supplier)
 
     print(material_data_by_suppliers)
@@ -569,60 +581,64 @@ def calculate_product_cost(request, product_id, width, height, quantity):
 # BoM breakdown
 def get_bill_of_materials(request): # need to add finishes here
     product_id = request.GET.get("product_id")
-    height = request.GET.get("height")
-    width = request.GET.get("width")
-    quantity = request.GET.get("item_quantity")
+    height = float(request.GET.get("item_height"))
+    width = float(request.GET.get("item_width"))
+    item_quantity = float(request.GET.get("item_quantity"))
 
-    product = get_object_or_404(Product, pk=product_id)
-    materials = ProductMaterial.objects.filter(product_id=product.id)
+    print(request.GET)
+
+    product = get_object_or_404(Product, product_id=product_id)
+    materials = ProductMaterial.objects.filter(product = product)
+    print(ProductMaterial.objects.all())
     bom = []
     for material in materials:
-        quantity = material.material_quantity,
-        scale_by_height = material.scale_by_height,
-        scale_by_width = material.scale_by_width,
-        scale_ratio = material.scale_ratio
+        material_quantity = float(material.material_quantity)
+        scale_by_height = material.scale_by_height
+        scale_by_width = material.scale_by_width
+        scale_ratio = float(material.scale_ratio)
         material_type = material.material.material_type
 
+
         if material_type == "Accessory":
-            material_unit_measurement = 1
-            total_quantity_measurement = material_unit_measurement*quantity
-            unit_measurement_cost = material.material.material_cost
-            total_measurement_cost = total_quantity_measurement*unit_measurement_cost
+            material_single_unit = 1
+            material_single_item_quantity = material_single_unit*material_quantity
+            material_single_unit_cost = material.material.material_cost
+            material_single_item_quantity_cost = material_single_item_quantity*material_single_unit_cost
+            material_unit_total_quantity = material_single_item_quantity*item_quantity
+            material_total_cost = material_unit_total_quantity*cost
             
         else:
             material_finish = request.GET.get("material_finish")
             material_obj = material.material
+            
             finish = MaterialFinish.objects.get(finish_name="Mill-Finish", material=material_obj)
             if not material_finish:
-                cost = finish.finish_cost
+                cost = float(finish.finish_cost)
                 if scale_by_height:
-                    material_unit_measurement = height*scale_ratio
+                    material_single_unit = height*scale_ratio
                 else:
-                    material_unit_measurement = width*scale_ratio
-                    total_quantity_measurement = quantity*material_unit_measurement
+                    material_single_unit = width*scale_ratio
+                material_single_item_quantity = material_quantity*material_single_unit
 
-                    unit_measurement_cost = material_unit_measurement*cost
-                    total_measurement_cost = total_quantity_measurement*cost
+                material_single_unit_cost = material_single_unit*cost
+                material_single_item_quantity_cost = material_single_item_quantity*cost
+
+                material_unit_total_quantity = material_single_item_quantity*item_quantity
+                material_total_cost = material_unit_total_quantity*cost
             else:
                 pass
 
-        if scale_by_height:
-            material_unit_measurement = height*scale_ratio
-        else:
-            material_unit_measurement = width*scale_ratio
-        total_quantity_measurement = quantity*material_unit_measurement
-
-        unit_measurement_cost = material_unit_measurement*cost
-        total_measurement_cost = total_quantity_measurement*cost
 
         bom.append({
-        "material_id": material.material_id,
-        "material_name": material.material_name,
+        "material_id": material.material.material_id,
+        "material_name": material.material.material_name,
         "quantity": material.material_quantity,
-        "material_unit_measurement": material_unit_measurement,
-        "total_quantity_measurement": total_quantity_measurement,
-        "unit_measurement_cost": unit_measurement_cost,
-        "total_measurement_cost": total_measurement_cost,
+        "material_single_unit": material_single_unit,
+        "material_single_item_quantity": material_single_item_quantity,
+        "material_single_unit_cost": material_single_unit_cost,
+        "material_single_item_quantity_cost": material_single_item_quantity_cost,
+        "material_unit_total_quantity": material_unit_total_quantity,
+        "material_total_cost": material_total_cost,
         })
         
     return JsonResponse({"product": product.product_name, "bom": bom})

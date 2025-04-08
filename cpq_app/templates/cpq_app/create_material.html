@@ -80,6 +80,7 @@
             <div class="col">
                 <label for="type">Material Type</label>
                 <select class="material_type form-select" id="type" name="type">
+                    <option value="" disabled selected>Select Material Type</option>
                     <option value="glass">Glass</option>
                     <option value="aluminum">Aluminum</option>
                     <option value="accessory">Accessory</option>
@@ -97,6 +98,7 @@
                 <select class="material_unit form-select" id="unit" name="unit">
                     <option value="FT">per ft</option>
                     <option value="PC">per pc</option>
+                    <option value="SQFT">per sq/ft</option>
                 </select>
             </div>
             <div class="col">
@@ -132,8 +134,8 @@
     <div class="col">
         <select class="finish_name form-select" id="type" name="type">
             <option value="delete" hidden></option>
-            <option value="" disabled selected>Select Finish</option>
-            <option value="Clear">Clear</option>
+            <option value="" disabled>Select Finish</option>
+            <option value="Clear" selected>Clear</option>
             <option value="Tempered">Tempered</option>
             <option value="Laminated">Laminated</option>
         </select>
@@ -152,8 +154,8 @@
     <div class="col">
         <select class="finish_name form-select" id="type" name="type">
             <option value="delete" hidden></option>
-            <option value="" disabled selected>Select Finish</option>
-            <option value="Mill-Finish">Mill-Finish</option>
+            <option value="" disabled>Select Finish</option>
+            <option value="Mill-Finish" selected>Mill-Finish</option>
             <option value="Anodized">Anodized</option>
             <option value="Analok">Analok</option>
             <option value="Powdercoatedd">Powdercoated</option>
@@ -224,9 +226,6 @@
             console.log(newRow)
             newRow.addClass("materialFinish_row");
             newRow.attr('id', 'materialFinish_row' + rowCounter_addFinish);
-            newRow.find('.finish_name').val('');
-            newRow.find('.finish_cost').val('');
-
             newRow.find('.delete-materialFinish').attr('data-row-id', 'materialFinish_row' + rowCounter_addFinish)
 
             newRow.show()
@@ -424,6 +423,10 @@
             let material_type = $(this).val();
             
             addFinish_button.data("material-type", material_type)
+
+            if (material_type !== "accessory") {
+                addFinish(material_type);
+            }
             console.log(addFinish_button.data('material-type'))
         });   
     })

@@ -421,12 +421,13 @@
         };
         
         $.ajax({
-            url: "/get_products/", 
+            url: "/get_bill_of_materials/", 
             type: "GET",
             data: submit_data,
             dataType: "json",
             success: function (response) {
                 console.log('Success')
+                console.log(response)
             },
             error: function () {
                 alert("Failed to fetch products. Please try again.");

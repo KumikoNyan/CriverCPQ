@@ -11,6 +11,7 @@ urlpatterns = [
     path('quotations/<int:quotation_id>/version/', views.create_quotation_version, name='create_quotation_version'),
     path('quotations/<int:quotation_id>/versions/', views.get_quotation_versions, name='get_quotation_versions'),
     path('quotations/<int:quotation_id>/status/<str:status>/', views.update_quotation_status, name='update_quotation_status'),
+    path('get_bill_of_materials/', views.get_bill_of_materials, name='get_bill_of_materials'),
     
     # bill of materials (BOM)
     path('products/', views.product_list, name='product_list'),
