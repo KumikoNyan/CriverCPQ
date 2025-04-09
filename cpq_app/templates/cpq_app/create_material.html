@@ -211,6 +211,13 @@
         const finish_template_glass = $('#materialFinish_row_temp_glass');
         const finish_template_aluminum = $('#materialFinish_row_temp_aluminum');
         const finish_template_accessory = $('#materialFinish_row_temp_accessory');
+
+        const unit_select = $('.material_unit')
+        const unit_mapping = {
+            aluminum: { value: 'FT', text: 'per ft' },     
+            glass: { value: 'SQFT', text: 'per sq/ft' },  
+            accessory: { value: 'PC', text: 'per pc' }      
+        };
         
         function addFinish(material_type) {
             rowCounter_addFinish++;             
@@ -415,11 +422,8 @@
             allowClear: true,
         });
         $('.material_type').change(function() {
-            // Clear the finish_container
-            console.log('entering')
             finish_container.empty();
             
-            // Get the selected material type
             let material_type = $(this).val();
             
             addFinish_button.data("material-type", material_type)
@@ -428,6 +432,12 @@
                 addFinish(material_type);
             }
             console.log(addFinish_button.data('material-type'))
+
+            if (unit_mapping[material_type]) {
+                let unit = unit_mapping[material_type];
+                
+                unit_select.val(unit.value);
+            }
         });   
     })
 </script>

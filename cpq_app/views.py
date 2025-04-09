@@ -269,7 +269,7 @@ def product_detail(request, product_id):
                 elif material_scale == "by_width":
                     new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_width=True, scale_ratio=scale_ratio)
                 else:
-                    new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity)
+                    new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_ratio=0)
 
                 print(new_pm)
 
@@ -327,7 +327,7 @@ def create_product(request):
                     elif material_scale == "by_width":
                         new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_width=True, scale_ratio=scale_ratio)
                     else:
-                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity)
+                        new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_ratio=0)
 
                     print(new_pm)
 
@@ -579,7 +579,7 @@ def calculate_product_cost(request, product_id, width, height, quantity):
     pass
 
 # BoM breakdown
-def get_bill_of_materials(request): # need to add finishes here
+def get_bill_of_materials(request): 
     product_id = request.GET.get("product_id")
     height = float(request.GET.get("item_height"))
     width = float(request.GET.get("item_width"))
@@ -597,12 +597,11 @@ def get_bill_of_materials(request): # need to add finishes here
         scale_by_width = material.scale_by_width
         scale_ratio = float(material.scale_ratio)
         material_type = material.material.material_type
-
-
-        if material_type == "Accessory":
+        print(material_type)
+        if material_type == "accessory":
             material_single_unit = 1
             material_single_item_quantity = material_single_unit*material_quantity
-            material_single_unit_cost = material.material.material_cost
+            material_single_unit_cost = float(material.material.material_cost)
             material_single_item_quantity_cost = material_single_item_quantity*material_single_unit_cost
             material_unit_total_quantity = material_single_item_quantity*item_quantity
             material_total_cost = material_unit_total_quantity*cost
@@ -642,53 +641,73 @@ def get_bill_of_materials(request): # need to add finishes here
             "material_total_cost": f"{material_total_cost:.2f}",
             "material_finish": material_finish.finish_name or "",
         })
-        # Aggregate quantities and costs
-        aggregated_bom = defaultdict(lambda: {
-            "material_name": "",
-            "quantity": 0.0,
-            "material_unit": "",
-            "material_single_unit": [],
-            "material_single_item_quantity": 0.0,
-            "material_single_unit_cost": [],
-            "material_single_item_quantity_cost": 0.0,
-            "material_unit_total_quantity": 0.0,
-            "material_total_cost": 0.0,
-            "material_finish": "",
-        })
+    aggregated_bom = defaultdict(lambda: {
+        "material_name": "",
+        "quantity": 0.0,
+        "material_unit": "",
+        "material_single_unit": [],
+        "material_single_item_quantity": 0.0,
+        "material_single_unit_cost": [],
+        "material_single_item_quantity_cost": 0.0,
+        "material_unit_total_quantity": 0.0,
+        "material_total_cost": 0.0,
+        "material_finish": "",
+    })
 
-        for item in bom:
-            material_id = item["material_id"]
-            
-            
-            aggregated_bom[material_id]["material_name"] = item["material_name"] 
-            aggregated_bom[material_id]["quantity"] += float(item["quantity"])
-            aggregated_bom[material_id]["material_unit"] = item["material_unit"]  
-            aggregated_bom[material_id]["material_single_unit"].append(item["material_single_unit"])
-            aggregated_bom[material_id]["material_single_item_quantity"] += float(item["material_single_item_quantity"])
-            aggregated_bom[material_id]["material_single_unit_cost"].append(float(item["material_single_unit_cost"]))
-            aggregated_bom[material_id]["material_single_item_quantity_cost"] += float(item["material_single_item_quantity_cost"])
-            aggregated_bom[material_id]["material_unit_total_quantity"] += float(item["material_unit_total_quantity"])
-            aggregated_bom[material_id]["material_total_cost"] += float(item["material_total_cost"])
-            aggregated_bom[material_id]["material_finish"] = item["material_finish"] 
-
+    for item in bom:
+        material_id = item["material_id"]
         
-        result_bom = [
-            {
-                "material_id": material_id,
-                "material_name": values["material_name"],
-                "quantity": f"{values['quantity']:.2f}",
-                "material_unit": values["material_unit"],
-                "material_single_unit": [f"{value:.2f}" for value in set(values["material_single_unit"])],
-                "material_single_item_quantity": f"{values['material_single_item_quantity']:.2f}",
-                "material_single_unit_cost": [f"{value:.2f}" for value in set(values["material_single_unit_cost"])],
-                "material_single_item_quantity_cost": f"{values['material_single_item_quantity_cost']:.2f}",
-                "material_unit_total_quantity": f"{values['material_unit_total_quantity']:.2f}",
-                "material_total_cost": f"{values['material_total_cost']:.2f}",
-                "material_finish": values["material_finish"],
-            }
-            for material_id, values in aggregated_bom.items()
-        ]
-    return JsonResponse({"product": product.product_name, "bom": result_bom})
+        
+        aggregated_bom[material_id]["material_name"] = item["material_name"] 
+        aggregated_bom[material_id]["quantity"] += float(item["quantity"])
+        aggregated_bom[material_id]["material_unit"] = item["material_unit"]  
+        aggregated_bom[material_id]["material_single_unit"].append(item["material_single_unit"])
+        aggregated_bom[material_id]["material_single_item_quantity"] += float(item["material_single_item_quantity"])
+        aggregated_bom[material_id]["material_single_unit_cost"].append(float(item["material_single_unit_cost"]))
+        aggregated_bom[material_id]["material_single_item_quantity_cost"] += float(item["material_single_item_quantity_cost"])
+        aggregated_bom[material_id]["material_unit_total_quantity"] += float(item["material_unit_total_quantity"])
+        aggregated_bom[material_id]["material_total_cost"] += float(item["material_total_cost"])
+        aggregated_bom[material_id]["material_finish"] = item["material_finish"] 
+
+    
+    result_bom = [
+        {
+            "material_id": material_id,
+            "material_name": values["material_name"],
+            "quantity": f"{values['quantity']:.2f}",
+            "material_unit": values["material_unit"],
+            "material_single_unit": [f"{value:.2f}" for value in set(values["material_single_unit"])],
+            "material_single_item_quantity": f"{values['material_single_item_quantity']:.2f}",
+            "material_single_unit_cost": [f"{value:.2f}" for value in set(values["material_single_unit_cost"])],
+            "material_single_item_quantity_cost": f"{values['material_single_item_quantity_cost']:.2f}",
+            "material_unit_total_quantity": f"{values['material_unit_total_quantity']:.2f}",
+            "material_total_cost": f"{values['material_total_cost']:.2f}",
+            "material_finish": values["material_finish"],
+        }
+        for material_id, values in aggregated_bom.items()
+    ]
+    total_cost_of_materials = sum(float(item["material_total_cost"]) for item in result_bom)
+    cost_of_materials_per_item = sum(float(item["material_single_item_quantity_cost"]) for item in result_bom)
+    product_margin = product.product_margin
+    labor_margin = product.product_labor
+    print(labor_margin)
+    print(product_margin)
+    price_per_item = cost_of_materials_per_item*(1 + ((labor_margin+product_margin)/100))
+    total_price = price_per_item*item_quantity
+    response_data = {
+        "product": product.product_name,
+        "bom": result_bom,
+        "total_cost_of_materials": f"{total_cost_of_materials:.2f}",
+        "cost_of_materials_per_item": f"{cost_of_materials_per_item:.2f}",
+        "product_margin": product_margin,  
+        "labor_margin": labor_margin,      
+        "price_per_item": f"{price_per_item:.2f}",
+        "total_price": f"{total_price:.2f}",
+        "item_quantity": item_quantity,
+    }
+
+    return JsonResponse(response_data)
+
 # misc for the faq and about
 def faq(request):
     return render(request, 'cpq_app/faq.html')

@@ -98,7 +98,7 @@
                 <select class="material_unit form-select" id="unit" name="unit">
                     <option value="FT"{% if material_object.material_unit == 'FT' %}selected{%endif%}>per ft</option>
                     <option value="PC"{% if material_object.material_unit == 'PC' %}selected{%endif%}>per pc</option>
-                    <option value="PC"{% if material_object.material_unit == 'SQFT' %}selected{%endif%}>per sq/ft</option>
+                    <option value="SQFT"{% if material_object.material_unit == 'SQFT' %}selected{%endif%}>per sq/ft</option>
                 </select>
             </div>
             <div class="col">
@@ -277,6 +277,13 @@
         const finish_template_glass = $('#materialFinish_row_temp_glass');
         const finish_template_aluminum = $('#materialFinish_row_temp_aluminum');
         const finish_template_accessory = $('#materialFinish_row_temp_accessory');
+
+        const unit_select = $('.material_unit')
+        const unit_mapping = {
+            aluminum: { value: 'FT', text: 'per ft' },     
+            glass: { value: 'SQFT', text: 'per sq/ft' },  
+            accessory: { value: 'PC', text: 'per pc' }      
+        };
         
         function addFinish(material_type, counter, button) {
             counter++;             
@@ -527,7 +534,13 @@
                 addFinish_button.trigger("click");
             }
             console.log(addFinish_button.data('material-type'))
-        });  
+
+            if (unit_mapping[material_type]) {
+                let unit = unit_mapping[material_type];
+                
+                unit_select.val(unit.value);
+            }
+        });   
     })
 </script>
 {% endblock %}

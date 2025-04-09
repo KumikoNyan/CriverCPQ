@@ -142,7 +142,6 @@
     </div>
 </div>
 
-
 <div class="modal fade" id="bom_modal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -151,7 +150,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <table class="table table-borderless table-striped table-hover align-middle" id="bomTable" cellpadding="5">
+                <table class="table table-borderless table-hover align-middle" id="bomTable" cellpadding="5">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -172,6 +171,40 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade configure_template" id="bom_modal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel"><h4>Configure for <span id="modal_productName"></span></h4></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-borderless table-hover align-middle" id="bomTable" cellpadding="5">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Qty per Item</th>
+                            <th>Material Cost per Item</th>
+                            <th>Total Quantity</th>
+                            <th>Total Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary submit-supplier">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="configure_containers">
+
 </div>
 
 <script>
@@ -423,11 +456,6 @@
 
         newRow.find(".product_id")
         .append('<option value="delete" hidden></option>')
-        .select2({ 
-            theme: "bootstrap-5",
-            placeholder: "Select Product",
-            allowClear: true
-        });
         let selectedDefaultSupplier = $('#quoteItem_row_temp').find('.supplier').val();
         newRow.find('.supplier').val(selectedDefaultSupplier).trigger('change');
 
@@ -446,6 +474,8 @@
         let item_quantity = item_row.find(".item_quantity").val()
         let item_width = item_row.find(".item_width").val()
         let item_height = item_row.find(".item_height").val()
+
+        $(".form-control, .form-select").removeClass("is-invalid");
 
         if (!item_quantity) {
             item_row.find(".item_quantity").addClass("is-invalid");
@@ -501,6 +531,39 @@
                         </tr>`;
                     bom_modal_tbody.append(row);
                 });
+ 
+                bom_modal_tbody.append(`
+                    <tr><td colspan="5"></td></tr>
+                    <tr><td colspan="5"></td></tr>
+                    <tr><td colspan="5"></td></tr>
+                    <tr>
+                        <td>Total</td>
+                        <td></td>
+                        <td>${response.cost_of_materials_per_item}</td>
+                        <td>${response.item_quantity} items</td>
+                        <td>${response.total_cost_of_materials}</td>
+                    </tr>
+                    <tr>
+                        <td>${response.product_margin}% Profit</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>${response.labor_margin}% Labor</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>Price</td>
+                        <td></td>
+                        <td>${response.price_per_item}</td>
+                        <td>${response.item_quantity} items</td>
+                        <td>${response.total_price}</td>
+                    </tr>`)
                 let modalInstance = new bootstrap.Modal(bom_modal[0]);
                 modalInstance.show();
             },
@@ -509,6 +572,9 @@
             }
         });
 
+
+    })
+    $(document).on("click", ".configure", function () {
 
     })
 </script>
