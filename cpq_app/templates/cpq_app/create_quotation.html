@@ -111,7 +111,10 @@
             <button type="button" class="btn btn-primary bom">See Bill of Materials</button>
         </div>
         <div class="col">
-            <button type="button" class="btn btn-primary bom">Configure</button>
+            <button type="button" class="btn btn-primary configure">Configure</button>
+        </div>
+        <div class="col">
+            <button type="button" class="btn btn-primary calculate_price">Caculate Price</button>
         </div>
         <div class="col-1">
             <button type="button" class="btn btn-close btn-delete delete-quoteItem" data-row-id="quoteItem_row">
@@ -140,7 +143,36 @@
 </div>
 
 
+<div class="modal fade" id="bom_modal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel"><h4>BOM for <span id="modal_productName"></span></h4></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-borderless table-striped table-hover align-middle" id="bomTable" cellpadding="5">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Qty per Item</th>
+                            <th>Material Cost per Item</th>
+                            <th>Total Quantity</th>
+                            <th>Total Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
 
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary submit-supplier">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const item_container = $('.item_container');
@@ -284,7 +316,7 @@
             
             if (customerId) {
                 $.ajax({
-                    url: '/get_customer',  // Replace with your actual API endpoint
+                    url: '/get_customer',  
                     type: 'GET',
                     data: { customer_id: customerId },
                     dataType: 'json',
@@ -404,12 +436,38 @@
         console.log("created row: " + newRow.attr('id'))
     })
     $(document).on("click", ".bom", function () {
+        const bom_modal = $('#bom_modal')
+        const bom_modal_productLabel = bom_modal.find('#modal_productName')
+        const bom_modal_tbody = bom_modal.find('tbody')
+        let isValid = true;
         let item_row = $(this).parent().parent().parent();
         let item_supplier = item_row.find(".supplier").val()
         let product_id = item_row.find(".product_id").val()
         let item_quantity = item_row.find(".item_quantity").val()
         let item_width = item_row.find(".item_width").val()
         let item_height = item_row.find(".item_height").val()
+
+        if (!item_quantity) {
+            item_row.find(".item_quantity").addClass("is-invalid");
+            isValid = false;
+        }
+        if (!item_height) {
+            item_row.find(".item_height").addClass("is-invalid");
+            isValid = false;
+        }
+        if (!item_width) {
+            item_row.find(".item_width").addClass("is-invalid");
+            isValid = false;
+        }
+        if (!product_id) {
+            item_row.find(".product_id").addClass("is-invalid");
+            isValid = false;
+        }
+
+        if (!isValid) {
+            alert("Please fill in all required fields.");
+            return;
+        }
 
         let submit_data = {
             'product_id': product_id,
@@ -428,11 +486,30 @@
             success: function (response) {
                 console.log('Success')
                 console.log(response)
+
+                bom_modal_productLabel.text(response.product);
+                bom_modal_tbody.empty();
+    
+                response.bom.forEach(material => {
+                    let row = `
+                        <tr>
+                            <td>${material.material_name}, ${material.material_finish}</td>
+                            <td>${material.material_single_item_quantity}${material.material_unit}</td>
+                            <td>${material.material_single_item_quantity_cost}</td>
+                            <td>${material.material_unit_total_quantity}${material.material_unit}</td>
+                            <td>${material.material_total_cost}</td>
+                        </tr>`;
+                    bom_modal_tbody.append(row);
+                });
+                let modalInstance = new bootstrap.Modal(bom_modal[0]);
+                modalInstance.show();
             },
             error: function () {
                 alert("Failed to fetch products. Please try again.");
             }
         });
+
+
     })
 </script>
 {% endblock %}
