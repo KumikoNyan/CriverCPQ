@@ -90,8 +90,12 @@ class QuotationItem(models.Model):
     item_quantity = models.IntegerField()
     product_margin = models.IntegerField()
     product_labor = models.IntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    total_price = models.DecimalField(max_digits=12, decimal_places=2)
+    item_height = models.FloatField()
+    item_width = models.FloatField()
+    glass_finish = models.ForeignKey(MaterialFinish, on_delete=models.CASCADE, related_name="glass_finish")
+    aluminum_finish = models.ForeignKey(MaterialFinish, on_delete=models.CASCADE, related_name="aluminum_finish")
+    excluded_materials = models.CharField(max_length=50, null=True)
+    additional_materials = models.CharField(max_length=50, null=True)
 
     def save(self, *args, **kwargs):
         self.total_price = self.item_quantity * self.unit_price

@@ -110,7 +110,8 @@
             <div class="item_container">
             </div>
         </div>
-        <button type="button" class="btn btn-secondary mt-2 addItem" id="addItem">Add Item</button>
+        <button type="button" class="btn btn-primary mt-2 addItem" id="addItem">Add Item</button>
+        <button type="button" class="btn btn-primary mt-2 ms-2 addItem" id="total_bom">Total Bill of Materials</button>
 
         <div class="row pt-3 mt-3">
             <div class="col-6">
@@ -224,6 +225,39 @@
                 </table>
             </div>
             <div class="modal-footer">
+                <button type="button" class="download_excel_btn btn btn-success" data-filename="bill_of_materials">Download Excel</button>
+                <button type="button" class="btn btn-secondary close-bom" data-bs-dismiss="modal" data-item-id="">Close</button>
+                <button type="button" class="btn btn-primary save-bom" data-item-id="" data-exclude-material-ids="">Save changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="total_bom_modal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel"><h4>BOM for <span id="modal_productName"></span></h4></h5>
+                <button type="button" class="btn-close close-bom" data-bs-dismiss="modal" aria-label="Close" data-item-id=""></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-borderless table-hover align-middle" id="bomTable" cellpadding="5">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Finish</th>
+                            <th>Total Quantity</th>
+                            <th>Total Cost</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="download_excel_btn btn btn-success" data-filename="total_bom">Download Excel</button>
                 <button type="button" class="btn btn-secondary close-bom" data-bs-dismiss="modal" data-item-id="">Close</button>
                 <button type="button" class="btn btn-primary save-bom" data-item-id="" data-exclude-material-ids="">Save changes</button>
             </div>
@@ -245,6 +279,9 @@
     const default_aluminum_finish = $('.finish_default_aluminum')
     const quotation_margin = $('.quotation_margin')
     const quotation_labor = $('.quotation_labor')
+    const total_bom = $('#total_bom')
+    const project_input = $('.project')
+    let latestBOMresponse = null;
     let savedBOMs = {};
     rowCounter_addItem = 0;
 
@@ -367,9 +404,9 @@
         $(document).on('click', '.delete-bomItem', function () {
             let rowId = $(this).data('row-id');
             let row = $('#' + rowId);
-            let materialId = rowId.replace("bomItem_row", "");
+            let materialId = rowId.split("bomItem_row")[1];
         
-            row.attr('id', 'delete'); // Caution: This replaces the unique row ID!
+            row.attr('id', 'delete');
             row.hide();
         
             console.log("Deleted material ID:", materialId);
@@ -377,14 +414,12 @@
             let modal = $(this).closest('.modal');
             let bom_button = modal.find('.save-bom');
         
-            // ✅ Get the correct attribute
             let idsRaw = bom_button.data('exclude-material-ids') || ''
             let ids = idsRaw ? idsRaw.split('-') : [];
             ids.push(materialId)
         
             let updatedIds = ids.join('-');
         
-            // ✅ Update both attribute and jQuery cache
             bom_button.attr('data-exclude-material-ids', updatedIds);
             bom_button.data('exclude-material-ids', updatedIds);
         
@@ -439,10 +474,7 @@
             $(".form-control, .form-select").removeClass("is-invalid");
 
             let customer_id = $(".customer").val();
-            let customer_address = $(".customer_address").val();
             let project = $(".project").val();
-            let customer_mobile = $(".customer_mobile").val();
-            let customer_email = $(".customer_email").val();
 
             if (!customer_id) {
                 console.log("Product name is missing");
@@ -454,73 +486,73 @@
                 $(".project").addClass("is-invalid");
                 isValid = false;
             }
+            
+            item_container.find('.quoteItem_row').each(function () {
+                let item_row = $(this);
+                
+                let item_id = item_row.attr('id').replace("quoteItem_row", "")
+                let item_supplier = item_row.find(".supplier").val();
+                let product_id = item_row.find(".product_id").val();
+                let item_quantity = item_row.find(".item_quantity").val();
+                let item_width = item_row.find(".item_width").val();
+                let item_height = item_row.find(".item_height").val();
+                let glass_finish = item_row.find(".glass_finish").val();
+                let aluminum_finish = item_row.find(".aluminum_finish").val();
+                
+                let excluded_materials = [];
+    
+                if (savedBOMs[item_id]) {
+                    let rawExcluded = savedBOMs[item_id].excluded_materials;
+                    excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
+                } else {
+                    excluded_materials = [];
 
-        
-            $(".quoteItem_row").each(function() {
-                let row = $(this);
-                console.log(row.attr('id'))
-                let item_supplier = row.find(".supplier").val()
-                let product_id = row.find(".product_id").val()
-                let item_quantity = row.find(".item_quantity").val()
-                let item_width = row.find(".item_width").val()
-                let item_height = row.find(".item_height").val()
-                let unit_price = row.find(".unit_price").val()
-                let total_amount = row.find(".total_amount").val()
-
-
-                console.log(product_id)
-
-                if (product_id === "delete") {
-                    return; 
                 }
-
-                if (!item_supplier) {
-                    row.find(".item_supplier").addClass("is-invalid");
-                    isValid = false;
-                }
-                if (!item_width) {
-                    row.find(".item_width").addClass("is-invalid");
-                    isValid = false;
-                }
+                let submit_margin = quotation_margin.val();
+                let submit_labor = quotation_labor.val();
+                
                 if (!item_quantity) {
-                    row.find(".item_quantity").addClass("is-invalid");
+                    item_row.find(".item_quantity").addClass("is-invalid");
                     isValid = false;
                 }
                 if (!item_height) {
-                    row.find(".item_height").addClass("is-invalid");
+                    item_row.find(".item_height").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!item_width) {
+                    item_row.find(".item_width").addClass("is-invalid");
                     isValid = false;
                 }
                 if (!product_id) {
-                    row.find(".product_id").addClass("is-invalid");
+                    item_row.find(".product_id").addClass("is-invalid");
                     isValid = false;
                 }
-        
-                // Add only valid data
-                if (material_id && material_quantity && material_scale && scale_ratio) {
-                    material_data.push({
-                        'material_id': material_id,
-                        'material_quantity': material_quantity,
-                        'material_scale': material_scale,
-                        'scale_ratio': scale_ratio,
-                    });
-                }
+
+                material_data.push({
+                    'item_id': item_id,
+                    'product_id': product_id,
+                    'item_supplier': item_supplier,
+                    'item_quantity': item_quantity,
+                    'item_width': item_width,
+                    'item_height': item_height,
+                    'glass_finish': glass_finish,
+                    'aluminum_finish': aluminum_finish,
+                    'excluded_materials': excluded_materials,
+                    'submit_margin': submit_margin,
+                    'submit_labor':submit_labor,
+                });
+                
             });
-        
-            // Stop submission if validation fails
             if (!isValid) {
                 alert("Please fill in all required fields.");
                 return;
             }
-        
+
             // Prepare Data
             let submit_data = {
-                'product_id': product_id,
-                'product_name': product_name,
-                'product_category': product_category,
-                'product_margin': product_margin,
-                'product_labor': product_labor,
-                'supplier': supplier,
-                'pm_data': JSON.stringify(material_data),
+                'customer_id': customer_id,
+                'project': project,
+                'item_data': JSON.stringify(material_data),
                 "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
             };
         
@@ -574,15 +606,193 @@
                     }
                 });
             } else {
-                clearCustomerFields();
+                $('.customer_address').val('');
+                $('.customer_mobile').val('');
+                $('.customer_email').val('');
             }
         });
+
+
+        total_bom.click(function() {
+            let item_container = $('.item_container');  // Your container for the quote items
+            let submit_data = [];
+            let isValid = true;
+            $(".form-control, .form-select").removeClass("is-invalid");
+            // Iterate over each quoteItem_row in the container
+            item_container.find('.quoteItem_row').each(function () {
+                let item_row = $(this);
+                
+                let item_id = item_row.attr('id').replace("quoteItem_row", "")
+                let item_supplier = item_row.find(".supplier").val();
+                let product_id = item_row.find(".product_id").val();
+                let item_quantity = item_row.find(".item_quantity").val();
+                let item_width = item_row.find(".item_width").val();
+                let item_height = item_row.find(".item_height").val();
+                let glass_finish = item_row.find(".glass_finish").val();
+                let aluminum_finish = item_row.find(".aluminum_finish").val();
+                
+                let excluded_materials = [];
+                
     
-        function clearCustomerFields() {
-            $('.customer_address').val('');
-            $('.customer_mobile').val('');
-            $('.customer_email').val('');
-        }  
+                if (savedBOMs[item_id]) {
+                    let rawExcluded = savedBOMs[item_id].excluded_materials;
+                    excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
+                } else {
+                    excluded_materials = [];
+
+                }
+                let submit_margin = quotation_margin.val();
+                let submit_labor = quotation_labor.val();
+                
+                if (!item_quantity) {
+                    item_row.find(".item_quantity").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!item_height) {
+                    item_row.find(".item_height").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!item_width) {
+                    item_row.find(".item_width").addClass("is-invalid");
+                    isValid = false;
+                }
+                if (!product_id) {
+                    item_row.find(".product_id").addClass("is-invalid");
+                    isValid = false;
+                }
+
+                submit_data.push({
+                    'item_id': item_id,
+                    'product_id': product_id,
+                    'item_supplier': item_supplier,
+                    'item_quantity': item_quantity,
+                    'item_width': item_width,
+                    'item_height': item_height,
+                    'glass_finish': glass_finish,
+                    'aluminum_finish': aluminum_finish,
+                    'excluded_materials': excluded_materials,
+                    'submit_margin': submit_margin,
+                    'submit_labor':submit_labor,
+                });
+                
+            });
+            if (!isValid) {
+                alert("Please fill in all required fields.");
+                return;
+            }
+        
+        
+            $.ajax({
+                url: "/get_total_bom/", 
+                type: "POST",  
+                data: {
+                    'submit_data': JSON.stringify(submit_data),  
+                    'csrfmiddlewaretoken': $("[name=csrfmiddlewaretoken]").val()
+                },
+                dataType: "json",
+                success: function (response) {
+                    console.log('Success');
+                    console.log(response);
+                    latestBOMresponse = response;
+        
+                    // Handle the modal display
+                    let bom_modal = $('#total_bom_modal');
+                    let bom_modal_tbody = bom_modal.find('tbody');
+        
+                    // Clear the current table data
+                    bom_modal_tbody.empty();
+        
+                    // Iterate through the BOM response and add rows to the modal
+                    response.bom.forEach(material => {
+                        let row = `
+                            <tr id="bomItem_row${material.material_id}">
+                                <td>${material.material_name}</td>
+                                <td>${material.material_finish}</td>
+                                <td>${material.material_unit_total_quantity}${material.material_unit}</td>
+                                <td>${material.material_total_cost}</td>
+                            </tr>`;
+                        bom_modal_tbody.append(row);
+                    });
+        
+                    // Add the summary rows at the end
+                    bom_modal_tbody.append(`
+                        <tr><td colspan="5"></td></tr>
+                        <tr><td colspan="5"></td></tr>
+                        <tr><td colspan="5"></td></tr>
+                        <tr>
+                            <td>Total</td>
+                            <td></td>
+                            <td>${response.item_quantity} items</td>
+                            <td>${response.total_cost_of_materials}</td>
+                        </tr>
+                        <tr>
+                            <td style="width:15%;">
+                                <div class="d-flex align-items-center">
+                                    <span>${response.product_margin}% Profit</span>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td style="width:15%;">
+                                <div class="d-flex align-items-center">
+                                    <input type="number" class="product_id_hidden form-control" value="${response.product_id}" hidden>
+                                    <span>${response.labor_margin}% Labor</span>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Price</td>
+                            <td></td>
+                            <td>${response.item_quantity} items</td>
+                            <td>${response.total_price}</td>
+                        </tr>`);
+        
+                    // Show the modal with the BOM data
+                    bom_modal.modal('show');
+                },
+                error: function () {
+                    alert("Failed to fetch the total BOM. Please try again.");
+                }
+            });
+        });
+        $(document).on('click', '.download_excel_btn', function () {
+            // Build the data array for the Excel file
+            let response = latestBOMresponse;
+            let filename = $(this).data('filename')
+
+            let excelData = [
+                ["Material Name", "Finish", "Total Quantity", "Unit", "Total Cost"]
+            ];
+
+            response.bom.forEach(material => {
+                excelData.push([
+                    material.material_name,
+                    material.material_finish,
+                    material.material_unit_total_quantity,
+                    material.material_unit,
+                    material.material_total_cost
+                ]);
+            });
+
+            // Add summary
+            excelData.push([]);
+            excelData.push(["Total", "", response.item_quantity + " items", "", response.total_cost_of_materials]);
+            excelData.push(["Profit Margin", "", "", "", response.product_margin + "%"]);
+            excelData.push(["Labor Margin", "", "", "", response.labor_margin + "%"]);
+            excelData.push(["Final Price", "", response.item_quantity + " items", "", response.total_price]);
+
+            let worksheet = XLSX.utils.aoa_to_sheet(excelData);
+            let workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "BOM");
+
+            XLSX.writeFile(workbook, "total_bom.xlsx");
+        });
     });
     $(document).on("click", ".bom", function () {
         let button = $(this);
@@ -598,19 +808,16 @@
         let item_id = modal_id.replace("bom_modal", "")
 
         let excluded_materials = [];
-        let submit_margin;
-        let submit_labor;
 
         if (savedBOMs[item_id]) {
             let rawExcluded = savedBOMs[item_id].excluded_materials;
             excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
-            submit_margin = savedBOMs[item_id].product_margin;
-            submit_labor = savedBOMs[item_id].labor_margin;
         } else {
             excluded_materials = [];
-            submit_margin = quotation_margin.val();
-            submit_labor = quotation_labor.val();
         }
+
+        let submit_margin = quotation_margin.val();
+        let submit_labor = quotation_labor.val();
 
         let bom_modal_productLabel = bom_modal.find('#modal_productName')
         let bom_modal_tbody = bom_modal.find('tbody')
@@ -659,6 +866,7 @@
             'excluded_materials': excluded_materials,
             'quotation_margin': submit_margin,
             'quotation_labor': submit_labor,
+            'item_id': item_id,
             'csrfmiddlewaretoken': $("[name=csrfmiddlewaretoken]").val(),
         };
         
@@ -670,13 +878,16 @@
             success: function (response) {
                 console.log('Success')
                 console.log(response)
+                latestBOMresponse = response;
+
+                console.log(latestBOMresponse)
 
                 bom_modal_productLabel.text(response.product);
                 bom_modal_tbody.empty();
     
                 response.bom.forEach(material => {
                     let row = `
-                        <tr id="bomItem_row${material.material_id}">
+                        <tr id="${response.item_id}bomItem_row${material.material_id}">
                             <td>${material.material_name}</td>
                             <td>${material.material_finish}</td>
                             <td>${material.material_single_item_quantity}${material.material_unit}</td>
@@ -684,7 +895,7 @@
                             <td>${material.material_unit_total_quantity}${material.material_unit}</td>
                             <td>${material.material_total_cost}</td>
                             <td>
-                                <button type="button" class="btn btn-close btn-delete delete-bomItem" data-row-id="bomItem_row${material.material_id}"></button>
+                                <button type="button" class="btn btn-close btn-delete delete-bomItem" data-row-id="${response.item_id}bomItem_row${material.material_id}"></button>
                             </td>
                         </tr>`;
 
@@ -700,15 +911,13 @@
                         <td></td>
                         <td></td>
                         <td>${response.cost_of_materials_per_item}</td>
-                        <td>${response.item_quantity} items</td>
+                        <td>${response.item_quantity} item/s</td>
                         <td>${response.total_cost_of_materials}</td>
                     </tr>
                     <tr>
                         <td style="width:15%;">
                             <div class="d-flex align-items-center">
-                                <input type="number" class="bom_product_margin form-control"
-                                    value="${response.product_margin}" style="width: 45%;">
-                                <span>% Profit</span>
+                                <span>${response.product_margin}% Profit</span>
                             </div>
                         </td>
                         <td></td>
@@ -720,10 +929,8 @@
                     <tr>
                         <td style="width:15%;">
                             <div class="d-flex align-items-center">
-                                <input type="number" class="bom_labor_margin form-control me-2" placeholder="Quantity"
-                                    value="${response.labor_margin}" style="width: 45%;">
                                 <input type="number" class="product_id_hidden form-control" value="${response.product_id}" hidden>
-                                <span>% Labor</span>
+                                <span>${response.labor_margin}% Labor</span>
                             </div>
                         </td>
                         <td></td>
@@ -737,7 +944,7 @@
                         <td></td>
                         <td></td>
                         <td>${response.price_per_item}</td>
-                        <td>${response.item_quantity} items</td>
+                        <td>${response.item_quantity} item/s</td>
                         <td>${response.total_price}</td>
                     </tr>`)
                 button.data('loaded', true)
@@ -748,6 +955,8 @@
             }
         });
     })
+    
+    
 
     
     

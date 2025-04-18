@@ -30,10 +30,10 @@ def quotation_detail(request, quotation_id):
 def create_quotation(request):
     customers = Customer.objects.all()
     suppliers = Supplier.objects.all()
-
+    print(request.POST)
     if request.method == "POST":
-        data = json.loads(request.body)
-        customer = get_object_or_404(Customer, pk=data['customer_id'])
+        data = json.loads(request.POST)
+        customer = get_object_or_404(Customer, customer_id=data['customer_id'])
         quotation = Quotation.objects.create(
             date_created=data['date_created'],
             quotation_status='Draft',
@@ -570,86 +570,65 @@ def get_customer(request):
 def calculate_product_cost(request, product_id, width, height, quantity):
     pass
 
-# BoM breakdown
+
 def get_bill_of_materials(request): 
     product_id = request.GET.get("product_id")
     height = float(request.GET.get("item_height"))
     width = float(request.GET.get("item_width"))
     item_quantity = float(request.GET.get("item_quantity"))
     excluded_materials = request.GET.getlist("excluded_materials[]")
-
-    print(request.GET)
+    glass_finish = request.GET.get("glass_finish", "")
+    aluminum_finish = request.GET.get("aluminum_finish", "")
+    product_margin = float(request.GET.get("quotation_margin"))
+    labor_margin = float(request.GET.get("quotation_labor"))
 
     product = get_object_or_404(Product, product_id=product_id)
-    materials = ProductMaterial.objects.filter(product = product)
+    materials = ProductMaterial.objects.filter(product=product)
+    
     bom = []
-    for material in materials:
-        if str(material.material.material_id) in excluded_materials:
-            continue 
-        material_quantity = float(material.material_quantity)
-        scale_by_height = material.scale_by_height
-        scale_by_width = material.scale_by_width
-        scale_ratio = float(material.scale_ratio)
-        material_type = material.material.material_type
-        material_obj = material.material
-        print(material_type)
-        if material_type == "accessory":
-            material_single_unit = 1
-            material_single_item_quantity = material_single_unit*material_quantity
-            material_single_unit_cost = float(material.material.material_cost)
-            material_single_item_quantity_cost = material_single_item_quantity*material_single_unit_cost
-            material_unit_total_quantity = material_single_item_quantity*item_quantity
-            material_total_cost = material_unit_total_quantity*cost
-            material_finish = ""
-            
-        elif material_type == "glass":
-            material_finish = request.GET.get("glass_finish")
-        
-            finish_object = MaterialFinish.objects.get(finish_name=material_finish, material=material_obj)
-            cost = float(finish_object.finish_cost)
-            if scale_by_height:
-                material_single_unit = height*scale_ratio
-            else:
-                material_single_unit = width*scale_ratio
-            material_single_item_quantity = material_quantity*material_single_unit
 
-            material_single_unit_cost = material_single_unit*cost
-            material_single_item_quantity_cost = material_single_item_quantity*cost
+    for m in materials:
+        mat_id = str(m.material.material_id)
+        if mat_id in excluded_materials:
+            continue
 
-            material_unit_total_quantity = material_single_item_quantity*item_quantity
-            material_total_cost = material_unit_total_quantity*cost
+        mat = m.material
+        finish = ""
+        unit_cost = 0.0
+
+        if mat.material_type == "accessory":
+            single_unit = 1
+            unit_cost = float(mat.material_cost)
         else:
-            material_finish = request.GET.get("aluminum_finish")
-        
-            finish_object = MaterialFinish.objects.get(finish_name=material_finish, material=material_obj)
-            cost = float(finish_object.finish_cost)
-            if scale_by_height:
-                material_single_unit = height*scale_ratio
-            else:
-                material_single_unit = width*scale_ratio
-            material_single_item_quantity = material_quantity*material_single_unit
+            finish_name = glass_finish if mat.material_type == "glass" else aluminum_finish
+            finish_obj = MaterialFinish.objects.get(finish_name=finish_name, material=mat)
+            unit_cost = float(finish_obj.finish_cost)
+            finish = finish_name
+            dimension = height if m.scale_by_height else width
+            single_unit = dimension * float(m.scale_ratio)
 
-            material_single_unit_cost = material_single_unit*cost
-            material_single_item_quantity_cost = material_single_item_quantity*cost
-
-            material_unit_total_quantity = material_single_item_quantity*item_quantity
-            material_total_cost = material_unit_total_quantity*cost
-
+        single_item_qty = single_unit * float(m.material_quantity)
+        single_unit_cost = single_unit * unit_cost
+        single_item_cost = single_item_qty * unit_cost
+        total_unit_qty = single_item_qty * item_quantity
+        total_cost = total_unit_qty * unit_cost
 
         bom.append({
-            "material_id": material.material.material_id,
-            "material_name": material.material.material_name,
-            "quantity": f"{material.material_quantity:.2f}",
-            "material_unit": material.material.material_unit.lower(),
-            "material_single_unit": material_single_unit,
-            "material_single_item_quantity": f"{material_single_item_quantity:.2f}",
-            "material_single_unit_cost": f"{material_single_unit_cost:.2f}",
-            "material_single_item_quantity_cost": f"{material_single_item_quantity_cost:.2f}",
-            "material_unit_total_quantity": f"{material_unit_total_quantity:.2f}",
-            "material_total_cost": f"{material_total_cost:.2f}",
-            "material_finish": material_finish or "",
-            "material_type": material_type,
+            "material_id": mat.material_id,
+            "material_name": mat.material_name,
+            "quantity": f"{m.material_quantity:.2f}",
+            "material_unit": mat.material_unit.lower(),
+            "material_single_unit": single_unit,
+            "material_single_item_quantity": f"{single_item_qty:.2f}",
+            "material_single_unit_cost": f"{single_unit_cost:.2f}",
+            "material_single_item_quantity_cost": f"{single_item_cost:.2f}",
+            "material_unit_total_quantity": f"{total_unit_qty:.2f}",
+            "material_total_cost": f"{total_cost:.2f}",
+            "material_finish": finish,
+            "material_type": mat.material_type,
         })
+
+    # Aggregate materials
     aggregated_bom = defaultdict(lambda: {
         "material_name": "",
         "quantity": 0.0,
@@ -665,57 +644,194 @@ def get_bill_of_materials(request):
     })
 
     for item in bom:
-        material_id = item["material_id"]
-        aggregated_bom[material_id]["material_name"] = item["material_name"] 
-        aggregated_bom[material_id]["quantity"] += float(item["quantity"])
-        aggregated_bom[material_id]["material_unit"] = item["material_unit"]  
-        aggregated_bom[material_id]["material_single_unit"].append(item["material_single_unit"])
-        aggregated_bom[material_id]["material_single_item_quantity"] += float(item["material_single_item_quantity"])
-        aggregated_bom[material_id]["material_single_unit_cost"].append(float(item["material_single_unit_cost"]))
-        aggregated_bom[material_id]["material_single_item_quantity_cost"] += float(item["material_single_item_quantity_cost"])
-        aggregated_bom[material_id]["material_unit_total_quantity"] += float(item["material_unit_total_quantity"])
-        aggregated_bom[material_id]["material_total_cost"] += float(item["material_total_cost"])
-        aggregated_bom[material_id]["material_finish"] = item["material_finish"] 
-        aggregated_bom[material_id]["material_type"] = item["material_type"] 
+        mat_id = item["material_id"]
+        agg = aggregated_bom[mat_id]
+        agg["material_name"] = item["material_name"]
+        agg["quantity"] += float(item["quantity"])
+        agg["material_unit"] = item["material_unit"]
+        agg["material_single_unit"].append(item["material_single_unit"])
+        agg["material_single_item_quantity"] += float(item["material_single_item_quantity"])
+        agg["material_single_unit_cost"].append(float(item["material_single_unit_cost"]))
+        agg["material_single_item_quantity_cost"] += float(item["material_single_item_quantity_cost"])
+        agg["material_unit_total_quantity"] += float(item["material_unit_total_quantity"])
+        agg["material_total_cost"] += float(item["material_total_cost"])
+        agg["material_finish"] = item["material_finish"]
+        agg["material_type"] = item["material_type"]
 
-    
-    result_bom = [
+    # Prepare sorted result
+    result_bom = sorted([
         {
-            "material_id": material_id,
-            "material_name": values["material_name"],
-            "quantity": f"{values['quantity']:.2f}",
-            "material_unit": values["material_unit"],
-            "material_single_unit": [f"{value:.2f}" for value in set(values["material_single_unit"])],
-            "material_single_item_quantity": f"{values['material_single_item_quantity']:.2f}",
-            "material_single_unit_cost": [f"{value:.2f}" for value in set(values["material_single_unit_cost"])],
-            "material_single_item_quantity_cost": f"{values['material_single_item_quantity_cost']:.2f}",
-            "material_unit_total_quantity": f"{values['material_unit_total_quantity']:.2f}",
-            "material_total_cost": f"{values['material_total_cost']:.2f}",
-            "material_finish": values["material_finish"],
-            "material_type": values["material_type"],
+            "material_id": mat_id,
+            "material_name": data["material_name"],
+            "quantity": f"{data['quantity']:.2f}",
+            "material_unit": data["material_unit"],
+            "material_single_unit": [f"{x:.2f}" for x in set(data["material_single_unit"])],
+            "material_single_item_quantity": f"{data['material_single_item_quantity']:.2f}",
+            "material_single_unit_cost": [f"{x:.2f}" for x in set(data["material_single_unit_cost"])],
+            "material_single_item_quantity_cost": f"{data['material_single_item_quantity_cost']:.2f}",
+            "material_unit_total_quantity": f"{data['material_unit_total_quantity']:.2f}",
+            "material_total_cost": f"{data['material_total_cost']:.2f}",
+            "material_finish": data["material_finish"],
+            "material_type": data["material_type"],
         }
-        for material_id, values in aggregated_bom.items()
-    ]
+        for mat_id, data in aggregated_bom.items()
+    ], key=lambda x: x["material_name"])
 
-    total_cost_of_materials = sum(float(item["material_total_cost"]) for item in result_bom)
-    cost_of_materials_per_item = sum(float(item["material_single_item_quantity_cost"]) for item in result_bom)
-    product_margin = float(request.GET.get("quotation_margin"))
-    labor_margin = float(request.GET.get("quotation_labor"))
-    print(labor_margin)
-    print(product_margin)
-    price_per_item = cost_of_materials_per_item*(1 + ((labor_margin+product_margin)/100))
-    total_price = price_per_item*item_quantity
-    response_data = {
+    # Compute totals
+    total_cost = sum(float(item["material_total_cost"]) for item in result_bom)
+    per_item_cost = sum(float(item["material_single_item_quantity_cost"]) for item in result_bom)
+    price_per_item = per_item_cost * (1 + (labor_margin + product_margin) / 100)
+    total_price = price_per_item * item_quantity
+
+    return JsonResponse({
         "product": product.product_name,
         "product_id": product.product_id,
         "bom": result_bom,
-        "total_cost_of_materials": f"{total_cost_of_materials:.2f}",
-        "cost_of_materials_per_item": f"{cost_of_materials_per_item:.2f}",
-        "product_margin": product_margin,  
-        "labor_margin": labor_margin,      
+        "total_cost_of_materials": f"{total_cost:.2f}",
+        "cost_of_materials_per_item": f"{per_item_cost:.2f}",
+        "product_margin": product_margin,
+        "labor_margin": labor_margin,
         "price_per_item": f"{price_per_item:.2f}",
         "total_price": f"{total_price:.2f}",
         "item_quantity": item_quantity,
+        "item_id": request.GET.get('item_id'),
+    })
+
+
+
+def get_total_bom(request):
+    grand_bom = defaultdict(lambda: {
+        "material_name": "",
+        "quantity": 0.0,
+        "material_unit": "",
+        "material_single_unit": [],
+        "material_single_item_quantity": 0.0,
+        "material_single_unit_cost": [],
+        "material_single_item_quantity_cost": 0.0,
+        "material_unit_total_quantity": 0.0,
+        "material_total_cost": 0.0,
+        "material_finish": "",
+        "material_type": "",
+    })
+
+    total_cost_of_materials = 0
+    cost_of_materials_per_item = 0
+    total_price = 0
+    total_quantity = 0
+    last_product_id = None
+    last_margin = 0
+    last_labor = 0
+    data = json.loads(request.POST.get("submit_data", "[]"))
+    total_item_quantity = 0
+    for item in data:
+        product_id = item["product_id"]
+        height = float(item["item_height"])
+        width = float(item["item_width"])
+        item_quantity = float(item["item_quantity"])
+        excluded_materials = item.get("excluded_materials", [])
+        glass_finish = item.get("glass_finish", "")
+        aluminum_finish = item.get("aluminum_finish", "")
+        product_margin = float(item.get("submit_margin", 0))
+        labor_margin = float(item.get("submit_labor", 0))
+
+        product = get_object_or_404(Product, product_id=product_id)
+        materials = ProductMaterial.objects.filter(product=product)
+
+        for material in materials:
+            if str(material.material.material_id) in excluded_materials:
+                continue
+
+            material_quantity = float(material.material_quantity)
+            scale_by_height = material.scale_by_height
+            scale_by_width = material.scale_by_width
+            scale_ratio = float(material.scale_ratio)
+            material_obj = material.material
+            material_type = material_obj.material_type
+
+            # Determine cost and quantity
+            if material_type == "accessory":
+                material_finish = ""
+                cost = float(material_obj.material_cost)
+                material_single_unit = 1
+            else:
+                material_finish = glass_finish if material_type == "glass" else aluminum_finish
+                finish_object = MaterialFinish.objects.get(finish_name=material_finish, material=material_obj)
+                cost = float(finish_object.finish_cost)
+                material_single_unit = height * scale_ratio if scale_by_height else width * scale_ratio
+
+            material_single_item_quantity = material_quantity * material_single_unit
+            material_single_unit_cost = material_single_unit * cost
+            material_single_item_quantity_cost = material_single_item_quantity * cost
+            material_unit_total_quantity = material_single_item_quantity * item_quantity
+            material_total_cost = material_unit_total_quantity * cost
+
+            # Composite key: material_id + material_finish
+            mat_key = (material_obj.material_id, material_finish)
+            bom_entry = grand_bom[mat_key]
+            bom_entry["material_name"] = material_obj.material_name
+            bom_entry["material_unit"] = material_obj.material_unit.lower()
+            bom_entry["material_finish"] = material_finish
+            bom_entry["material_type"] = material_type
+            bom_entry["quantity"] += material_quantity
+            bom_entry["material_single_unit"].append(material_single_unit)
+            bom_entry["material_single_item_quantity"] += material_single_item_quantity
+            bom_entry["material_single_unit_cost"].append(material_single_unit_cost)
+            bom_entry["material_single_item_quantity_cost"] += material_single_item_quantity_cost
+            bom_entry["material_unit_total_quantity"] += material_unit_total_quantity
+            bom_entry["material_total_cost"] += material_total_cost
+
+        # Recalculate total costs only for non-excluded materials
+        for material in materials:
+            if str(material.material.material_id) in excluded_materials:
+                continue
+            material_quantity = float(material.material_quantity)
+            scale_ratio = float(material.scale_ratio)
+            scale_by_height = material.scale_by_height
+            scale_by_width = material.scale_by_width
+            material_obj = material.material
+            material_type = material_obj.material_type
+
+            if material_type == "accessory":
+                cost = float(material_obj.material_cost)
+                single_unit = 1
+            else:
+                finish_name = glass_finish if material_type == "glass" else aluminum_finish
+                finish_object = MaterialFinish.objects.get(finish_name=finish_name, material=material_obj)
+                cost = float(finish_object.finish_cost)
+                single_unit = height * scale_ratio if scale_by_height else width * scale_ratio
+
+            cost_of_materials_per_item += material_quantity * cost * single_unit
+            total_cost_of_materials += material_quantity * single_unit * item_quantity * cost
+
+        result_bom = sorted([
+            {
+                "material_id": mat_key[0],
+                "material_finish": mat_key[1],
+                "material_name": values["material_name"],
+                "quantity": f"{values['quantity']:.2f}",
+                "material_unit": values["material_unit"],
+                "material_single_unit": [f"{x:.2f}" for x in set(values["material_single_unit"])],
+                "material_single_item_quantity": f"{values['material_single_item_quantity']:.2f}",
+                "material_single_unit_cost": [f"{x:.2f}" for x in set(values["material_single_unit_cost"])],
+                "material_single_item_quantity_cost": f"{values['material_single_item_quantity_cost']:.2f}",
+                "material_unit_total_quantity": f"{values['material_unit_total_quantity']:.2f}",
+                "material_total_cost": f"{values['material_total_cost']:.2f}",
+                "material_type": values["material_type"],
+            }
+            for mat_key, values in grand_bom.items()
+        ], key=lambda x: x["material_name"])
+        total_item_quantity+= item_quantity
+    
+    total_cost = sum(float(item["material_total_cost"]) for item in result_bom)
+    total_price = total_cost * (1 + (labor_margin + product_margin) / 100)
+
+    response_data = {
+        "bom": result_bom,
+        "total_cost_of_materials": f"{total_cost:.2f}",
+        "product_margin": product_margin,
+        "labor_margin": labor_margin,
+        "total_price": f"{total_price:.2f}",
+        "item_quantity": total_item_quantity,
     }
 
     return JsonResponse(response_data)
