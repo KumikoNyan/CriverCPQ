@@ -1,0 +1,29 @@
+let finishSelect = ''; // initialize the select HTML string
+                    console.log(material.material_type)
+                    if (material.material_type === 'accessory') {
+                        // Leave blank if Accessory
+                        finishSelect = '';
+                    } else if (material.material_type === 'glass') {
+                        // Glass-specific select
+                        finishSelect = `
+                            <select class="finish_name form-select" id="type" name="type">
+                                <option value="delete" hidden></option>
+                                <option value="" disabled ${!material.material_finish ? 'selected' : ''}>Select Finish</option>
+                                <option value="Clear" ${material.material_finish === "Clear" ? "selected" : ""}>Clear</option>
+                                <option value="Tempered" ${material.material_finish === "Tempered" ? "selected" : ""}>Tempered</option>
+                                <option value="Laminated" ${material.material_finish === "Laminated" ? "selected" : ""}>Laminated</option>
+                            </select>
+                        `;
+                    } else if (material.material_type === 'aluminum') {
+                        // Aluminum-specific select
+                        finishSelect = `
+                            <select class="finish_name form-select">
+                                <option value="delete" hidden></option>
+                                <option value="" disabled ${material.material_finish ? '' : 'selected'}>Select Finish</option>
+                                <option value="Mill-Finish" ${material.material_finish === "Mill-Finish" ? "selected" : ""}>Mill-Finish</option>
+                                <option value="Anodized" ${material.material_finish === "Anodized" ? "selected" : ""}>Anodized</option>
+                                <option value="Analok" ${material.material_finish === "Analok" ? "selected" : ""}>Analok</option>
+                                <option value="Powdercoated" ${material.material_finish === "Powdercoated" ? "selected" : ""}>Powdercoated</option>
+                            </select>
+                        `;
+                    }

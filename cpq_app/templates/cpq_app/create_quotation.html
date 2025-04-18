@@ -60,18 +60,50 @@
             </div>
         </div>
         <hr>
+        
         <div class="row row-cols-auto">
             <div class="col justify-content-center">
                 <h4> Quotation Items </h4>
             </div>
-            <div class="col-3">
-            <label for="supplier_default">Default Supplier</label>
-            <select class="supplier_default form-select" id="supplier" name="supplier_default">
-                <option value="" selected disabled>Select a Supplier</option>
-                {% for supplier in suppliers %}
-                <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
-                {% endfor %}
-            </select>
+        </div>
+        <div class="row">
+            <div class="col-2">
+                <label for="supplier_default">Default Supplier</label>
+                <select class="supplier_default form-select" id="supplier" name="supplier_default">
+                    <option value="" selected disabled>Select a Supplier</option>
+                    {% for supplier in suppliers %}
+                    <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-2">
+                <label for="finish_default_glass ">Default Aluminum Finish</label>
+                <select class="finish_default_aluminum form-select" id="type" name="type">
+                    <option value="delete" hidden></option>
+                    <option value="" disabled>Select Aluminum Finish</option>
+                    <option value="Mill-Finish" selected>Mill-Finish</option>
+                    <option value="Anodized">Anodized</option>
+                    <option value="Analok">Analok</option>
+                    <option value="Powdercoated">Powdercoated</option>
+                </select>
+            </div>
+            <div class="col-2">
+                <label for="finish_default_glass ">Default Glass Finish</label>
+                <select class="finish_default_glass form-select" id="type" name="type">
+                    <option value="delete" hidden></option>
+                    <option value="" disabled>Select Glass Finish</option>
+                    <option value="Clear" selected>Clear</option>
+                    <option value="Tempered">Tempered</option>
+                    <option value="Laminated">Laminated</option>
+                </select>
+            </div>
+            <div class="col-2">
+                <label for="name">Margin </label>
+                <input type="number" class="quotation_margin form-control" value="30">
+            </div>
+            <div class="col-2">
+                <label for="name">Labor </label>
+                <input type="number" class="quotation_labor form-control" value="30">
             </div>
         </div>
         <div class="row">  
@@ -90,10 +122,16 @@
         </div>
     </form>
 </div>
-
-<div class="mt-4" id="quoteItem_row_temp" style="display:none;">
+<div class="mt-4 card px-3 py-2" id="quoteItem_row_temp" style="display:none;">
+    <!-- Supplier/Product Row -->
     <div class="row">
         <div class="col">
+            <h6 class="fw-bold">Quotation Item #</h5>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <label for="supplier">Supplier</label>
             <select class="supplier form-select" id="supplier" name="supplier">
                 <option value="" selected disabled>Select a Supplier</option>
                 {% for supplier in suppliers %}
@@ -101,63 +139,83 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col">
-            <select class="product_id form-select" id="">
-                <option value="" disabled selected>Select Product</option>
-                <option value="delete" hidden></option>
+        <div class="col-md-3">
+            <label for="product">Product</label>
+            <select class="product_id form-select" id="product" name="product">
+                <option value="" selected disabled>Select Product</option>
             </select>
         </div>
-        <div class="col">
-            <button type="button" class="btn btn-primary bom">See Bill of Materials</button>
+        <div class="col-md-3">
+            <label for="aluminum_finish">Aluminum Finish</label>
+            <select class="aluminum_finish bom-finish form-select" id="aluminum_finish" name="aluminum_finish">
+                <option value="" disabled>Select Finish</option>
+                <option value="Mill-Finish" selected>Mill-Finish</option>
+                <option value="Anodized">Anodized</option>
+                <option value="Analok">Analok</option>
+                <option value="Powdercoated">Powdercoated</option>
+            </select>
         </div>
-        <div class="col">
-            <button type="button" class="btn btn-primary configure">Configure</button>
-        </div>
-        <div class="col">
-            <button type="button" class="btn btn-primary calculate_price">Caculate Price</button>
-        </div>
-        <div class="col-1">
-            <button type="button" class="btn btn-close btn-delete delete-quoteItem" data-row-id="quoteItem_row">
-            </button>
+        <div class="col-md-3">
+            <label for="glass_finish">Glass Finish</label>
+            <select class="glass_finish bom-finish form-select" id="glass_finish" name="glass_finish">
+                <option value="" disabled selected>Select Glass Finish</option>
+                <option value="Clear">Clear</option>
+                <option value="Tempered">Tempered</option>
+                <option value="Laminated">Laminated</option>
+            </select>
         </div>
     </div>
-    <div class="row align-items-center mt-2">
-        <div class="col">
-            <input type="number" class="item_quantity form-control"
-                placeholder="Quantity">
+
+    <!-- Quantity and Dimensions -->
+    <div class="row mt-2 align-items-center">
+        <div class="col-md-2">
+            <label>Quantity</label>
+            <input type="number" class="item_quantity form-control" placeholder="Qty" value="1" min="1">
         </div>
-        <div class="col-5 d-flex align-items-center">
-            <input type="number" class="item_width form-control text-center" placeholder="Width" >
-            <span class="mx-2">X</span>
-            <input type="number" class="item_height form-control text-center" placeholder="Height">
+        <div class="col-md-4">
+            <label>Dimensions (W x H)</label>
+            <div class="d-flex align-items-center">
+                <input type="number" class="item_width form-control text-center" placeholder="Width" value="1" min="1">
+                <span class="mx-2">X</span>
+                <input type="number" class="item_height form-control text-center" placeholder="Height" value="1" min="1">
+            </div>
         </div>
-        <div class="col">
-            <input type="number" class="unit_price form-control"
-                placeholder="Unit Price" readonly>
+    </div>
+
+    <!-- Buttons -->
+    <div class="row mt-2 align-items-center">
+        <div class="col-md-10">
+            <button type="button" class="btn btn-outline-primary bom" data-modal-id="modal" data-loaded="false">
+                See Bill of Materials
+            </button>
         </div>
-        <div class="col">
-            <input type="number" class="total_amount form-control"
-                placeholder="Total Amount" readonly>
+        <div class="col-md-2 text-end">
+            <button type="button" class="btn btn-outline-danger btn-sm btn-delete delete-quoteItem" data-row-id="quoteItem_row">
+                <i class="bi bi-trash"></i> Delete
+            </button>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="bom_modal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+
+<div class="modal fade" id="bom_modal_template" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="myModalLabel"><h4>BOM for <span id="modal_productName"></span></h4></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close close-bom" data-bs-dismiss="modal" aria-label="Close" data-item-id=""></button>
             </div>
             <div class="modal-body">
                 <table class="table table-borderless table-hover align-middle" id="bomTable" cellpadding="5">
                     <thead>
                         <tr>
                             <th>Name</th>
+                            <th>Finish</th>
                             <th>Qty per Item</th>
                             <th>Material Cost per Item</th>
                             <th>Total Quantity</th>
                             <th>Total Cost</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -166,55 +224,97 @@
                 </table>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary submit-supplier">Save changes</button>
+                <button type="button" class="btn btn-secondary close-bom" data-bs-dismiss="modal" data-item-id="">Close</button>
+                <button type="button" class="btn btn-primary save-bom" data-item-id="" data-exclude-material-ids="">Save changes</button>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade configure_template" id="bom_modal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="myModalLabel"><h4>Configure for <span id="modal_productName"></span></h4></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <table class="table table-borderless table-hover align-middle" id="bomTable" cellpadding="5">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Qty per Item</th>
-                            <th>Material Cost per Item</th>
-                            <th>Total Quantity</th>
-                            <th>Total Cost</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                    </tbody>
-                </table>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary submit-supplier">Save changes</button>
-            </div>
-        </div>
-    </div>
+<div class="bom_modal_container">
+    
 </div>
-<div id="configure_containers">
 
-</div>
 
 <script>
     const item_container = $('.item_container');
+    const bom_modal_template = $('#bom_modal_template')
+    const item_template = $('#quoteItem_row_temp');
+    const bom_modal_container = $('.bom_modal_container');
+    const default_glass_finish = $('.finish_default_glass')
+    const default_aluminum_finish = $('.finish_default_aluminum')
+    const quotation_margin = $('.quotation_margin')
+    const quotation_labor = $('.quotation_labor')
+    let savedBOMs = {};
     rowCounter_addItem = 0;
 
     $(document).ready(function () {
         const addItem_button = $('#addItem');
         const customer_select = $('#customer_select')
         
+        $(document).on("change", ".supplier_default", function () {
+            let supplierId = $(this).val();
+            let default_prodSelect = $('#quoteItem_row_temp').find('.product_id')
+            let default_supplier = $('#quoteItem_row_temp').find('.supplier')
+            console.log(default_supplier)
+            console.log("Default supplier changed:", supplierId);
+        
+            if (supplierId) {
+                $.ajax({
+                    url: "/get_products/", 
+                    type: "GET",
+                    data: { supplier_id: supplierId },
+                    dataType: "json",
+                    success: function (response) {
+                        default_prodSelect.empty();  
+                        default_prodSelect.append('<option value="" disabled selected>Select Product</option>');
+        
+                        if (response.products.length > 0) {
+                            response.products.forEach(function (product) {
+                                default_prodSelect.append(`<option value="${product.product_id}">${product.product_name}</option>`);
+                            });
+                        } else {
+                            default_prodSelect.append('<option value="" disabled>No Products Available</option>');
+                        }
+    
+                        default_supplier.val(supplierId)
+                    },
+                    error: function () {
+                        alert("Failed to fetch products. Please try again.");
+                    }
+                });
+            }
+        });
+        $(document).on("change", ".supplier", function () {
+            let supplierId = $(this).val();  
+            let productSelect = $(this).closest(".row").find(".product_id"); 
+            
+            console.log("Supplier changed:", supplierId);
+        
+            if (supplierId) {
+                $.ajax({
+                    url: "/get_products/", 
+                    type: "GET",
+                    data: { supplier_id: supplierId },
+                    dataType: "json",
+                    success: function (response) {
+                        productSelect.empty();  
+                        productSelect.append('<option value="" disabled selected>Select Product</option>');
+        
+                        if (response.products.length > 0) {
+                            response.products.forEach(function (product) {
+                                productSelect.append(`<option value="${product.product_id}">${product.product_name}</option>`);
+                            });
+                        } else {
+                            productSelect.append('<option value="" disabled>No Products Available</option>');
+                        }
+                    },
+                    error: function () {
+                        alert("Failed to fetch products. Please try again.");
+                    }
+                });
+            }
+        });
         $(document).on('click', '.delete-quoteItem', function () {
             let rowId = $(this).data('row-id');
             let row = $('#' + rowId);
@@ -225,6 +325,112 @@
             row.hide();
             console.log("deleted row: " + row.attr('id'))
             console.log(idElement.val())
+        });
+        $("#addItem").click(function() {
+            let button = $(this);
+            console.log("works")
+
+            rowCounter_addItem++;
+            let newRow = item_template.clone();
+            
+            newRow.attr('id', 'quoteItem_row' + rowCounter_addItem);
+            newRow.addClass("quoteItem_row");
+            
+            newRow.find('.delete-quoteItem').attr('data-row-id', 'quoteItem_row' + rowCounter_addItem);
+            newRow.find('.bom').attr('data-modal-id', 'bom_modal' + rowCounter_addItem).attr('id', 'bom' + rowCounter_addItem)
+
+            newRow.find(".product_id")
+            .append('<option value="delete" hidden></option>')
+            let selectedDefaultSupplier = item_template.find('.supplier').val();
+            newRow.find('.supplier').val(selectedDefaultSupplier).trigger('change');
+
+            let selectedAluminumFinish = default_aluminum_finish.val();
+            let selectedGlassFinish =   default_glass_finish.val();
+
+            newRow.find('.glass_finish').val(selectedGlassFinish).trigger('change');
+            newRow.find('.aluminum_finish').val(selectedAluminumFinish).trigger('change');
+
+            newRow.find('h6').text('Quotation Item #' + rowCounter_addItem);
+
+            newRow.show();
+            item_container.append(newRow);
+
+            let newModal = bom_modal_template.clone();
+            newModal.attr('id', 'bom_modal' + rowCounter_addItem)
+            newModal.find('.close-bom').each(function () {
+                $(this).data('item-id', rowCounter_addItem);
+            });
+            newModal.find('.save-bom').data('item-id', rowCounter_addItem)
+            bom_modal_container.append(newModal)
+            console.log("created row and modal: " + newRow.attr('id') + newModal.attr('id') + newRow.find('.bom').attr('data-modal-id'))
+        })
+        $(document).on('click', '.delete-bomItem', function () {
+            let rowId = $(this).data('row-id');
+            let row = $('#' + rowId);
+            let materialId = rowId.replace("bomItem_row", "");
+        
+            row.attr('id', 'delete'); // Caution: This replaces the unique row ID!
+            row.hide();
+        
+            console.log("Deleted material ID:", materialId);
+        
+            let modal = $(this).closest('.modal');
+            let bom_button = modal.find('.save-bom');
+        
+            // ✅ Get the correct attribute
+            let idsRaw = bom_button.data('exclude-material-ids') || ''
+            let ids = idsRaw ? idsRaw.split('-') : [];
+            ids.push(materialId)
+        
+            let updatedIds = ids.join('-');
+        
+            // ✅ Update both attribute and jQuery cache
+            bom_button.attr('data-exclude-material-ids', updatedIds);
+            bom_button.data('exclude-material-ids', updatedIds);
+        
+            console.log("Updated exclude-material-ids:", updatedIds, bom_button.data('exclude-material-ids'));
+        });
+        
+        
+        $(document).on('click', '.close-bom', function () {
+            let itemId = $(this).data('item-id');
+            let row = $('#quoteItem_row' + itemId);
+            let button = row.find('.bom')
+
+            let modal = $(this).closest(".modal");
+            let button_save_bom = modal.find('.save-bom')
+            let previous_exclude = '';
+            if (savedBOMs[itemId]) {
+                previous_exclude = savedBOMs[itemId].excluded_materials;
+            }
+            console.log(button_save_bom)
+            button.data('loaded', false)
+            button_save_bom.data('exclude-material-ids', previous_exclude)
+        });
+        $(document).on("click", ".save-bom", function () {
+            let modal = $(this).closest(".modal");
+            let item_id = $(this).data('item-id')
+            let button = $('#bom' + item_id)
+        
+
+            let excluded_materials = $(this).data('exclude-material-ids')
+            let product_margin = modal.find(".bom_product_margin").val()
+            let labor_margin = modal.find(".bom_labor_margin").val()
+        
+            // Save it
+            savedBOMs[item_id] = {
+                excluded_materials,
+                product_margin,
+                labor_margin
+            };
+            button.data('loaded', false)
+            modal.modal('hide');
+        });
+        $(document).on('change', '.bom-finish', function () {
+            let row = $(this).parent().parent().parent();
+            let button = row.find('.bom');
+    
+            button.data('loaded', false)
         });
         $(".submit-btn").click(function() {
             let isValid = true;
@@ -377,96 +583,37 @@
             $('.customer_mobile').val('');
             $('.customer_email').val('');
         }  
-    })
-    $(document).on("change", ".supplier", function () {
-        let supplierId = $(this).val();  
-        let productSelect = $(this).closest(".row").find(".product_id"); 
-        
-        console.log("Supplier changed:", supplierId);
-    
-        if (supplierId) {
-            $.ajax({
-                url: "/get_products/", 
-                type: "GET",
-                data: { supplier_id: supplierId },
-                dataType: "json",
-                success: function (response) {
-                    productSelect.empty();  
-                    productSelect.append('<option value="" disabled selected>Select Product</option>');
-    
-                    if (response.products.length > 0) {
-                        response.products.forEach(function (product) {
-                            productSelect.append(`<option value="${product.product_id}">${product.product_name}</option>`);
-                        });
-                    } else {
-                        productSelect.append('<option value="" disabled>No Products Available</option>');
-                    }
-                },
-                error: function () {
-                    alert("Failed to fetch products. Please try again.");
-                }
-            });
-        }
     });
-    $(document).on("change", ".supplier_default", function () {
-        let supplierId = $(this).val();
-        let default_prodSelect = $('#quoteItem_row_temp').find('.product_id')
-        let default_supplier = $('#quoteItem_row_temp').find('.supplier')
-        console.log(default_supplier)
-        console.log("Default supplier changed:", supplierId);
-    
-        if (supplierId) {
-            $.ajax({
-                url: "/get_products/", 
-                type: "GET",
-                data: { supplier_id: supplierId },
-                dataType: "json",
-                success: function (response) {
-                    default_prodSelect.empty();  
-                    default_prodSelect.append('<option value="" disabled selected>Select Product</option>');
-    
-                    if (response.products.length > 0) {
-                        response.products.forEach(function (product) {
-                            default_prodSelect.append(`<option value="${product.product_id}">${product.product_name}</option>`);
-                        });
-                    } else {
-                        default_prodSelect.append('<option value="" disabled>No Products Available</option>');
-                    }
-
-                    default_supplier.val(supplierId)
-                },
-                error: function () {
-                    alert("Failed to fetch products. Please try again.");
-                }
-            });
-        }
-    });
-    $(document).on("click", "#addItem", function () {
-        let button = $(this);
-        console.log("works")
-
-        rowCounter_addItem++;
-        let item_template = $('#quoteItem_row_temp');
-        let newRow = item_template.clone();
-        
-        newRow.attr('id', 'quoteItem_row' + rowCounter_addItem);
-        newRow.addClass("quoteItem_row");
-        
-        newRow.find('.delete-quoteItem').attr('data-row-id', 'quoteItem_row' + rowCounter_addItem);
-
-        newRow.find(".product_id")
-        .append('<option value="delete" hidden></option>')
-        let selectedDefaultSupplier = $('#quoteItem_row_temp').find('.supplier').val();
-        newRow.find('.supplier').val(selectedDefaultSupplier).trigger('change');
-
-        newRow.show();
-        item_container.append(newRow);
-        console.log("created row: " + newRow.attr('id'))
-    })
     $(document).on("click", ".bom", function () {
-        const bom_modal = $('#bom_modal')
-        const bom_modal_productLabel = bom_modal.find('#modal_productName')
-        const bom_modal_tbody = bom_modal.find('tbody')
+        let button = $(this);
+        let modal_id = button.data('modal-id')
+        let alreadyLoaded = button.data('loaded');
+        let bom_modal = $('#' + modal_id)
+        
+        if (alreadyLoaded) {
+            console.log("already loaded")
+            bom_modal.modal('show');
+            return;
+        }
+        let item_id = modal_id.replace("bom_modal", "")
+
+        let excluded_materials = [];
+        let submit_margin;
+        let submit_labor;
+
+        if (savedBOMs[item_id]) {
+            let rawExcluded = savedBOMs[item_id].excluded_materials;
+            excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
+            submit_margin = savedBOMs[item_id].product_margin;
+            submit_labor = savedBOMs[item_id].labor_margin;
+        } else {
+            excluded_materials = [];
+            submit_margin = quotation_margin.val();
+            submit_labor = quotation_labor.val();
+        }
+
+        let bom_modal_productLabel = bom_modal.find('#modal_productName')
+        let bom_modal_tbody = bom_modal.find('tbody')
         let isValid = true;
         let item_row = $(this).parent().parent().parent();
         let item_supplier = item_row.find(".supplier").val()
@@ -474,6 +621,8 @@
         let item_quantity = item_row.find(".item_quantity").val()
         let item_width = item_row.find(".item_width").val()
         let item_height = item_row.find(".item_height").val()
+        let glass_finish = item_row.find(".glass_finish").val()
+        let aluminum_finish = item_row.find(".aluminum_finish").val()
 
         $(".form-control, .form-select").removeClass("is-invalid");
 
@@ -505,6 +654,11 @@
             'item_quantity': item_quantity,
             'item_width': item_width,
             'item_height': item_height,
+            'glass_finish': glass_finish,
+            'aluminum_finish': aluminum_finish,
+            'excluded_materials': excluded_materials,
+            'quotation_margin': submit_margin,
+            'quotation_labor': submit_labor,
             'csrfmiddlewaretoken': $("[name=csrfmiddlewaretoken]").val(),
         };
         
@@ -522,13 +676,18 @@
     
                 response.bom.forEach(material => {
                     let row = `
-                        <tr>
-                            <td>${material.material_name}, ${material.material_finish}</td>
+                        <tr id="bomItem_row${material.material_id}">
+                            <td>${material.material_name}</td>
+                            <td>${material.material_finish}</td>
                             <td>${material.material_single_item_quantity}${material.material_unit}</td>
                             <td>${material.material_single_item_quantity_cost}</td>
                             <td>${material.material_unit_total_quantity}${material.material_unit}</td>
                             <td>${material.material_total_cost}</td>
+                            <td>
+                                <button type="button" class="btn btn-close btn-delete delete-bomItem" data-row-id="bomItem_row${material.material_id}"></button>
+                            </td>
                         </tr>`;
+
                     bom_modal_tbody.append(row);
                 });
  
@@ -539,19 +698,35 @@
                     <tr>
                         <td>Total</td>
                         <td></td>
+                        <td></td>
                         <td>${response.cost_of_materials_per_item}</td>
                         <td>${response.item_quantity} items</td>
                         <td>${response.total_cost_of_materials}</td>
                     </tr>
                     <tr>
-                        <td>${response.product_margin}% Profit</td>
+                        <td style="width:15%;">
+                            <div class="d-flex align-items-center">
+                                <input type="number" class="bom_product_margin form-control"
+                                    value="${response.product_margin}" style="width: 45%;">
+                                <span>% Profit</span>
+                            </div>
+                        </td>
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
                     </tr>
                     <tr>
-                        <td>${response.labor_margin}% Labor</td>
+                        <td style="width:15%;">
+                            <div class="d-flex align-items-center">
+                                <input type="number" class="bom_labor_margin form-control me-2" placeholder="Quantity"
+                                    value="${response.labor_margin}" style="width: 45%;">
+                                <input type="number" class="product_id_hidden form-control" value="${response.product_id}" hidden>
+                                <span>% Labor</span>
+                            </div>
+                        </td>
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -560,22 +735,22 @@
                     <tr>
                         <td>Price</td>
                         <td></td>
+                        <td></td>
                         <td>${response.price_per_item}</td>
                         <td>${response.item_quantity} items</td>
                         <td>${response.total_price}</td>
                     </tr>`)
-                let modalInstance = new bootstrap.Modal(bom_modal[0]);
-                modalInstance.show();
+                button.data('loaded', true)
+                bom_modal.modal('show')
             },
             error: function () {
                 alert("Failed to fetch products. Please try again.");
             }
         });
-
-
     })
-    $(document).on("click", ".configure", function () {
 
-    })
+    
+    
+
 </script>
 {% endblock %}

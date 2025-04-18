@@ -70,6 +70,14 @@
 
         <div class="row">
             <div class="col">
+                <label for="supplier">Supplier</label>
+                <select class="supplier form-select" id="supplier" name="supplier">
+                    {% for supplier in suppliers %}
+                    <option value="{{supplier.supplier_id}}"{% if product.supplier.supplier_id == supplier.supplier_id %}selected{%endif%}>{{supplier.supplier_name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col">
                 <label for="name">Product ID</label>
                 <input type="text" class="product_id form-control" value="{{product.product_id}}" readonly>
             </div>
@@ -87,25 +95,6 @@
                     <option value="swing_door"{% if product.product_category == 'swing_door' %}selected{%endif%}>Swing Door</option>
                     <option value="shower"{% if product.product_category == 'shower' %}selected{%endif%}>Shower Enclosure</option>
                     <option value="storefront"{% if product.product_category == 'storefront' %}selected{%endif%}>Storefront</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="row pt-3">
-            <div class="col">
-                <label for="margin">Margin</label>
-                <input type="number" class="product_margin form-control" value="{{product.product_margin}}">
-            </div>
-            <div class="col">
-                <label for="labor">Labor Margin</label>
-                <input type="number" class="product_labor form-control" value="{{product.product_labor}}">
-            </div>
-            <div class="col">
-                <label for="supplier">Supplier</label>
-                <select class="supplier form-select" id="supplier" name="supplier">
-                    {% for supplier in suppliers %}
-                    <option value="{{supplier.supplier_id}}"{% if product.supplier.supplier_id == supplier.supplier_id %}selected{%endif%}>{{supplier.supplier_name}}</option>
-                    {% endfor %}
                 </select>
             </div>
         </div>
@@ -408,8 +397,6 @@
             let product_id = $(".product_id").val();
             let product_name = $(".product_name").val();
             let product_category = $(".product_category").val();
-            let product_margin = $(".product_margin").val();
-            let product_labor = $(".product_labor").val();
             let supplier = $(".supplier").val();
 
             if (!product_name) {
@@ -420,16 +407,6 @@
             if (!product_category) {
                 console.log("Product category is missing");
                 $(".product_category").addClass("is-invalid");
-                isValid = false;
-            }
-            if (!product_margin) {
-                console.log("Product margin is missing");
-                $(".product_margin").addClass("is-invalid");
-                isValid = false;
-            }
-            if (!product_labor) {
-                console.log("Product labor is missing");
-                $(".product_labor").addClass("is-invalid");
                 isValid = false;
             }
             if (!supplier) {
@@ -488,8 +465,6 @@
                 'product_id': product_id,
                 'product_name': product_name,
                 'product_category': product_category,
-                'product_margin': product_margin,
-                'product_labor': product_labor,
                 'supplier': supplier,
                 'pm_data': JSON.stringify(material_data),
                 "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),

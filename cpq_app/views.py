@@ -237,16 +237,12 @@ def product_detail(request, product_id):
             product_id = request.POST.get("product_id")
             product_name = request.POST.get("product_name")
             product_category = request.POST.get("product_category")
-            product_margin = request.POST.get("product_margin")
-            product_labor = request.POST.get("product_labor")
             supplier_id = request.POST.get("supplier")
             supplier = Supplier.objects.get(supplier_id=supplier_id)
 
             product = Product.objects.get(product_id = product_id)
             product.product_name = product_name
             product.product_category = product_category
-            product.product_margin = product_margin
-            product.product_labor = product_labor
             product.supplier = supplier
             
             product.save()
@@ -301,15 +297,11 @@ def create_product(request):
             product_id = request.POST.get("product_id")
             product_name = request.POST.get("product_name")
             product_category = request.POST.get("product_category")
-            product_margin = request.POST.get("product_margin")
-            product_labor = request.POST.get("product_labor")
             supplier_id = request.POST.get("supplier")
             supplier = Supplier.objects.get(supplier_id=supplier_id)
 
             new_product = Product.objects.create(product_name=product_name, 
             product_category=product_category, 
-            product_margin=product_margin, 
-            product_labor=product_labor, 
             supplier=supplier)
 
             pm_data = json.loads(request.POST.get("pm_data"))
@@ -584,19 +576,22 @@ def get_bill_of_materials(request):
     height = float(request.GET.get("item_height"))
     width = float(request.GET.get("item_width"))
     item_quantity = float(request.GET.get("item_quantity"))
+    excluded_materials = request.GET.getlist("excluded_materials[]")
 
     print(request.GET)
 
     product = get_object_or_404(Product, product_id=product_id)
     materials = ProductMaterial.objects.filter(product = product)
-    print(ProductMaterial.objects.all())
     bom = []
     for material in materials:
+        if str(material.material.material_id) in excluded_materials:
+            continue 
         material_quantity = float(material.material_quantity)
         scale_by_height = material.scale_by_height
         scale_by_width = material.scale_by_width
         scale_ratio = float(material.scale_ratio)
         material_type = material.material.material_type
+        material_obj = material.material
         print(material_type)
         if material_type == "accessory":
             material_single_unit = 1
@@ -605,27 +600,40 @@ def get_bill_of_materials(request):
             material_single_item_quantity_cost = material_single_item_quantity*material_single_unit_cost
             material_unit_total_quantity = material_single_item_quantity*item_quantity
             material_total_cost = material_unit_total_quantity*cost
+            material_finish = ""
             
-        else:
-            material_finish = request.GET.get("material_finish")
-            material_obj = material.material
-            
-            if not material_finish:
-                material_finish = MaterialFinish.objects.get(finish_name="Mill-Finish", material=material_obj)
-                cost = float(material_finish.finish_cost)
-                if scale_by_height:
-                    material_single_unit = height*scale_ratio
-                else:
-                    material_single_unit = width*scale_ratio
-                material_single_item_quantity = material_quantity*material_single_unit
-
-                material_single_unit_cost = material_single_unit*cost
-                material_single_item_quantity_cost = material_single_item_quantity*cost
-
-                material_unit_total_quantity = material_single_item_quantity*item_quantity
-                material_total_cost = material_unit_total_quantity*cost
+        elif material_type == "glass":
+            material_finish = request.GET.get("glass_finish")
+        
+            finish_object = MaterialFinish.objects.get(finish_name=material_finish, material=material_obj)
+            cost = float(finish_object.finish_cost)
+            if scale_by_height:
+                material_single_unit = height*scale_ratio
             else:
-                pass
+                material_single_unit = width*scale_ratio
+            material_single_item_quantity = material_quantity*material_single_unit
+
+            material_single_unit_cost = material_single_unit*cost
+            material_single_item_quantity_cost = material_single_item_quantity*cost
+
+            material_unit_total_quantity = material_single_item_quantity*item_quantity
+            material_total_cost = material_unit_total_quantity*cost
+        else:
+            material_finish = request.GET.get("aluminum_finish")
+        
+            finish_object = MaterialFinish.objects.get(finish_name=material_finish, material=material_obj)
+            cost = float(finish_object.finish_cost)
+            if scale_by_height:
+                material_single_unit = height*scale_ratio
+            else:
+                material_single_unit = width*scale_ratio
+            material_single_item_quantity = material_quantity*material_single_unit
+
+            material_single_unit_cost = material_single_unit*cost
+            material_single_item_quantity_cost = material_single_item_quantity*cost
+
+            material_unit_total_quantity = material_single_item_quantity*item_quantity
+            material_total_cost = material_unit_total_quantity*cost
 
 
         bom.append({
@@ -639,7 +647,8 @@ def get_bill_of_materials(request):
             "material_single_item_quantity_cost": f"{material_single_item_quantity_cost:.2f}",
             "material_unit_total_quantity": f"{material_unit_total_quantity:.2f}",
             "material_total_cost": f"{material_total_cost:.2f}",
-            "material_finish": material_finish.finish_name or "",
+            "material_finish": material_finish or "",
+            "material_type": material_type,
         })
     aggregated_bom = defaultdict(lambda: {
         "material_name": "",
@@ -652,12 +661,11 @@ def get_bill_of_materials(request):
         "material_unit_total_quantity": 0.0,
         "material_total_cost": 0.0,
         "material_finish": "",
+        "material_type": "",
     })
 
     for item in bom:
         material_id = item["material_id"]
-        
-        
         aggregated_bom[material_id]["material_name"] = item["material_name"] 
         aggregated_bom[material_id]["quantity"] += float(item["quantity"])
         aggregated_bom[material_id]["material_unit"] = item["material_unit"]  
@@ -668,6 +676,7 @@ def get_bill_of_materials(request):
         aggregated_bom[material_id]["material_unit_total_quantity"] += float(item["material_unit_total_quantity"])
         aggregated_bom[material_id]["material_total_cost"] += float(item["material_total_cost"])
         aggregated_bom[material_id]["material_finish"] = item["material_finish"] 
+        aggregated_bom[material_id]["material_type"] = item["material_type"] 
 
     
     result_bom = [
@@ -683,19 +692,22 @@ def get_bill_of_materials(request):
             "material_unit_total_quantity": f"{values['material_unit_total_quantity']:.2f}",
             "material_total_cost": f"{values['material_total_cost']:.2f}",
             "material_finish": values["material_finish"],
+            "material_type": values["material_type"],
         }
         for material_id, values in aggregated_bom.items()
     ]
+
     total_cost_of_materials = sum(float(item["material_total_cost"]) for item in result_bom)
     cost_of_materials_per_item = sum(float(item["material_single_item_quantity_cost"]) for item in result_bom)
-    product_margin = product.product_margin
-    labor_margin = product.product_labor
+    product_margin = float(request.GET.get("quotation_margin"))
+    labor_margin = float(request.GET.get("quotation_labor"))
     print(labor_margin)
     print(product_margin)
     price_per_item = cost_of_materials_per_item*(1 + ((labor_margin+product_margin)/100))
     total_price = price_per_item*item_quantity
     response_data = {
         "product": product.product_name,
+        "product_id": product.product_id,
         "bom": result_bom,
         "total_cost_of_materials": f"{total_cost_of_materials:.2f}",
         "cost_of_materials_per_item": f"{cost_of_materials_per_item:.2f}",

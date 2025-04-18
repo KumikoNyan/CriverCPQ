@@ -34,8 +34,6 @@ class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     product_name = models.CharField(max_length=255)
     product_category = models.CharField(max_length=255)
-    product_margin = models.IntegerField()
-    product_labor = models.IntegerField()
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
@@ -90,6 +88,8 @@ class QuotationItem(models.Model):
     quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     item_quantity = models.IntegerField()
+    product_margin = models.IntegerField()
+    product_labor = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_price = models.DecimalField(max_digits=12, decimal_places=2)
 
