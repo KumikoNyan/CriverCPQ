@@ -190,10 +190,10 @@
     
     <div class="container-wrapper">
         <div class="Login-photo">
-            <img src="{% static 'Login.png' %}" alt='Login'>
+            <img src="{% static 'Login.png' %}" alt='Login'> <!--Ev add back the image you want here-->
         </div>
         <div class="container">
-            <img src="{% static 'Logo (2).png' %}" alt="Logo" style="width: 25vw; height: 20vh; margin-top: 10%;">
+            <img src="{% static 'Logo (2).png' %}" alt="Logo" style="width: 25vw; height: 20vh; margin-top: 10%;"> <!--Ev add back the image you want here-->
             <h1>Sign in</h1>
             <form method="POST" action="{% url 'login' %}">
                 {% csrf_token %}

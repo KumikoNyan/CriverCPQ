@@ -10,6 +10,10 @@ from collections import defaultdict
 def index(request):
     return JsonResponse({"message": "Welcome Bitch!"})
 
+def login(request):
+    return render(request, 'EvanBADmuv/login.html')
+
+
 # quotation views
 def quotation_list(request):
     quotations = list(Quotation.objects.values())

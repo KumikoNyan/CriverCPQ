@@ -2,7 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.material_list, name='index'),
+    path('', views.login, name='index'),
+    path('login/', views.login, name='login'),
     
     # quotation URLs
     path('quotations/', views.quotation_list, name='quotation_list'),
