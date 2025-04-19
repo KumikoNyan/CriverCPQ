@@ -120,21 +120,79 @@ def quotation_list(request):
             return JsonResponse(response)
     return render(request, 'cpq_app/quotation_list.html', {"quotations": quotation_data})
 
-    quotations = list(Quotation.objects.values())
-    return render(request, 'cpq_app/quotation_list.html', {"quotations": quotations})
-
 def quotation_detail(request, quotation_id):
     if not is_logged_in(request):
         return redirect('login')
 
-    quotation = get_object_or_404(Quotation, pk=quotation_id)
-    return JsonResponse({"quotation": {
-        "id": quotation.id,
-        "date_created": quotation.date_created,
-        "status": quotation.quotation_status,
-        "version": quotation.version_number,
-        "is_active": quotation.is_active_version
-    }})
+    customers = Customer.objects.all()
+    suppliers = Supplier.objects.all()
+    print(request.POST)
+    
+    #to edit
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+        customer = get_object_or_404(Customer, customer_id=request.POST.get("customer_id"))
+        project = request.POST.get("project")
+        quotation = Quotation.objects.create(
+            customer=customer,
+            project=project,
+            quotation_status='new',
+            version_number=1,
+            is_active_version=True
+        )
+        print(request.POST)
+
+        for item in json.loads(request.POST.get('item_data')):
+            product = Product.objects.get(product_id=item['product_id'])
+
+            QuotationItem.objects.create(
+                quotation=quotation,
+                product=product,
+                item_quantity=int(item['item_quantity']),
+                product_margin=int(item['submit_margin']),
+                product_labor=int(item['submit_labor']),
+                item_height=float(item['item_height']),
+                item_width=float(item['item_width']),
+                glass_finish=item['glass_finish'],
+                aluminum_finish=item['aluminum_finish'],
+                excluded_materials=item.get('excluded_materials', ''),
+                additional_materials=''  # Or adjust if this is collected from frontend later
+            )
+        response['url'] = reverse('quotation_list')
+        return JsonResponse(response)
+    
+    quotation = Quotation.objects.get(quotation_id=quotation_id)
+    quotation_data = {
+        'customer_name': quotation.customer.customer_name,
+        'customer_address': quotation.customer.customer_address,
+        'customer_email': quotation.customer.customer_email,
+        'customer_mobile': quotation.customer.customer_mobile,
+        'project': quotation.project,
+        'date_created': quotation.date_created,
+        'version_number': quotation.version_number,
+        'quotation_status': quotation.quotation_status,
+        'quotation_id': quotation.quotation_id,
+        'items': [
+            {
+                'item_id': item.item_id,
+                'product': item.product.product_id,
+                'product_name': item.product.product_name,
+                'supplier': item.product.supplier.supplier_id,
+                'item_quantity': item.item_quantity,
+                'item_margin': item.product_margin,
+                'item_labor': item.product_labor,
+                'item_height': item.item_height,
+                'item_width': item.item_width,
+                'glass_finish': item.glass_finish,
+                'aluminum_finish': item.aluminum_finish,
+                'excluded_materials': item.excluded_materials,
+                'additional_materials': item.additional_materials,
+            } for item in QuotationItem.objects.filter(quotation = quotation)
+        ],
+    }
+    print(quotation_data)
+    return render(request, 'cpq_app/quotation_detail.html', {'customers': customers, 'suppliers': suppliers, 'quotation': quotation_data, 'item_count': len(QuotationItem.objects.filter(quotation = quotation))})
 
 @csrf_exempt
 def create_quotation(request):
@@ -143,6 +201,7 @@ def create_quotation(request):
 
     customers = Customer.objects.all()
     suppliers = Supplier.objects.all()
+    materials = Material.objects.all()
     print(request.POST)
     if request.method == "POST":
         response = {}
@@ -170,13 +229,13 @@ def create_quotation(request):
                 item_height=float(item['item_height']),
                 item_width=float(item['item_width']),
                 glass_finish=item['glass_finish'],
-                aluminum_finish=['aluminum_finish'],
+                aluminum_finish=item['aluminum_finish'],
                 excluded_materials=item.get('excluded_materials', ''),
-                additional_materials=''  # Or adjust if this is collected from frontend later
+                additional_materials=''  # need to add additional material support
             )
         response['url'] = reverse('quotation_list')
         return JsonResponse(response)
-    return render(request, 'cpq_app/create_quotation.html', {'customers': customers, 'suppliers': suppliers})
+    return render(request, 'cpq_app/create_quotation.html', {'customers': customers, 'suppliers': suppliers, 'materials': materials})
 
 # quotation versioning - NOT WORKING YET
 @csrf_exempt

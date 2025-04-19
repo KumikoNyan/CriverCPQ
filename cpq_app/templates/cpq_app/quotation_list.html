@@ -53,7 +53,7 @@
                     <td>
                         <div class="d-flex gap-2">
                             <button type="button" class="submit-delete btn btn-danger" data-quotation-id="{{quotation.quotation_id}}">Delete</button>
-                            <a href="" class="btn btn-primary">Edit</a>
+                            <a href="{% url 'quotation_detail' quotation_id=quotation.quotation_id %}"  class="btn btn-primary">Edit</a>
                             <button class="btn btn-success create-document" data-quotation-id="{{quotation.quotation_id}}">Create Document</a>
                         </div>
                     </td>
