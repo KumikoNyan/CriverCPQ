@@ -10,6 +10,17 @@ A Configure, Price, and Quote (CPQ) system for our client Criver Glass &amp; Alu
 - Optional: [Visual Studio Code](https://code.visualstudio.com/download)
 - Optional: [Github Desktop](https://desktop.github.com/download/)
 
+## Features
+- CRUD Quotations
+- CRUD Materials
+- CRUD Products
+- CRUD Suppliers
+- CRUD Customers
+- Role-based Authentication
+  - ```superuser```
+  - ```regular```
+- Export tables to Spreadsheet
+
 ## To Run the Project
 1. ```python manage.py runserver```
 2. If made changes to ```models.py``` make sure to ```python manage.py makemigrations```
