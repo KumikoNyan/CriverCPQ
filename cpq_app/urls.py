@@ -13,6 +13,7 @@ urlpatterns = [
     path('quotations/<int:quotation_id>/status/<str:status>/', views.update_quotation_status, name='update_quotation_status'),
     path('get_bill_of_materials/', views.get_bill_of_materials, name='get_bill_of_materials'),
     path('get_total_bom/', views.get_total_bom, name='get_total_bom'),
+    path('download-quotation-excel/<int:quotation_id>/', views.download_quotation_excel, name='download_quotation_excel'),
     
     # bill of materials (BOM)
     path('products/', views.product_list, name='product_list'),

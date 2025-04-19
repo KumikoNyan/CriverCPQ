@@ -30,15 +30,16 @@
 
 
 <div class="material_container container d-flex justify-content-center">
-    <div class="table-responsive" style="width:100%;">
+    <div class="table-responsive" style="width:90%;">
         <table class="table table-striped table-hover table-bordered table-sm">
             <thead class="sticky-top bg-primary text-white" >
                 <tr>
                     <th>Quotation ID</th>
                     <th>Date Created</th>
+                    <th>Project</th>
                     <th>Customer</th>
-                    <th>Total Price</th>
                     <th>Version Number</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -46,13 +47,147 @@
                 <tr>
                     <td>{{quotation.quotation_id}}</td>
                     <td>{{quotation.date_created}}</td>
-                    <td>{{quotation.customer}}</td>
-                    <td>{{quotation}}</td>
-                    <td>{{quotation}}</td>
+                    <td>{{quotation.project}}</td>
+                    <td>{{quotation.customer_name}}</td>
+                    <td>{{quotation.version_number}}</td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="submit-delete btn btn-danger" data-quotation-id="{{quotation.quotation_id}}">Delete</button>
+                            <a href="" class="btn btn-primary">Edit</a>
+                            <button class="btn btn-success create-document" data-quotation-id="{{quotation.quotation_id}}">Create Document</a>
+                        </div>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+    $(document).ready(function () {
+        $(".submit-supplier").click(function() {
+            let isValid = true;
+            supplier_data = [];
+            // Validate Material Finishes
+            $(".supplier_row").each(function() {
+                let row = $(this);
+                let supplier_id = row.find(".supplier_id").val()
+                let supplier_name = row.find(".supplier_name").val()
+
+                if (!supplier_name) {
+                    row.find(".supplier_name").addClass("is-invalid");
+                    isValid = false;
+                }
+        
+                // Add only valid data
+                if (supplier_name) {
+                    supplier_data.push({
+                        'supplier_id': supplier_id,
+                        'supplier_name': supplier_name,
+                    });
+                }
+            });
+        
+            // Prepare Data
+            let submit_data = {
+                'supplier_data': JSON.stringify(supplier_data),
+                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
+            };
+        
+            console.log(submit_data);
+        
+            // Submit Data via AJAX
+            $.ajax({
+                method: "post",
+                data: submit_data,
+                success: function(data) {
+                    console.log(data["status"]);
+                    console.log(data);
+                    if (data["status"]) {
+                        window.location = data["url"];
+                    } else {
+                        alert(data["error"]);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert("Something broke");
+                }
+            });
+        });
+
+        $(".submit-delete").click(function() {
+            let quotation_id = $(this).data("quotation-id");
+        
+            if (!confirm("Are you sure you want to delete this product?")) {
+                return;
+            }
+        
+            // Prepare Data
+            let delete_data = {
+                "quotation_id": quotation_id,
+                "action": "delete",
+            };
+        
+            console.log("Deleting material:", delete_data);
+        
+            $.ajax({
+                method: "post",
+                url: "/quotations/",  
+                data: delete_data,
+                success: function(data) {
+                    console.log(data);
+                    if (data["status"]) {
+                        window.location = data["url"];
+                    } else {
+                        alert("Failed to delete quotation: " + data["error"]);
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    alert("Something went wrong.");
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+        
+        $('.create-document').on('click', function (e) {
+            e.preventDefault();
+            console.log('create-document')
+            
+            const quotationId = $(this).data('quotation-id');
+            const url = `/download-quotation-excel/${quotationId}/`;
+    
+            $.ajax({
+                url: url,
+                type: 'GET',
+                xhrFields: {
+                    responseType: 'blob' // Important to handle the Excel file correctly
+                },
+                success: function (data, status, xhr) {
+                    const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    
+                    // Extract filename from headers or default
+                    let filename = "quotation.xlsx";
+                    const disposition = xhr.getResponseHeader('Content-Disposition');
+                    if (disposition && disposition.indexOf('attachment') !== -1) {
+                        const match = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                        if (match && match[1]) filename = match[1].replace(/['"]/g, '');
+                    }
+    
+                    // Trigger browser download
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = filename;
+                    console.log(link)
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                },
+                error: function () {
+                    alert("Failed to download Excel.");
+                }
+            });
+        });
+    })
+</script>
 {% endblock %}

@@ -1,19 +1,47 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.urls import reverse
 from collections import defaultdict
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, Border, Side
 
 # Change welcome message later or remove if not needed
 def index(request):
     return JsonResponse({"message": "Welcome Bitch!"})
 
 # quotation views
+@csrf_exempt
 def quotation_list(request):
-    quotations = list(Quotation.objects.values())
-    return render(request, 'cpq_app/quotation_list.html', {"quotations": quotations})
+    quotations = Quotation.objects.all()
+    quotation_data = []
+    for quotation in quotations:
+        temp = {
+            'customer_name': quotation.customer.customer_name,
+            'project': quotation.project,
+            'date_created': quotation.date_created,
+            'version_number': quotation.version_number,
+            'quotation_status': quotation.quotation_status,
+            'quotation_id': quotation.quotation_id
+        }
+        quotation_data.append(temp)
+    print(quotation_data)
+
+    if request.method == "POST":
+        response = {}
+        response['status'] = True
+
+        if request.POST.get("action") == "delete":
+            quotation_id = request.POST.get("quotation_id")
+            quotation_object = Quotation.objects.get(quotation_id=quotation_id)
+            quotation_object.delete()
+            response['url'] = reverse('quotation_list')
+            print(response)
+            return JsonResponse(response)
+    return render(request, 'cpq_app/quotation_list.html', {"quotations": quotation_data})
 
 def quotation_detail(request, quotation_id):
     quotation = get_object_or_404(Quotation, pk=quotation_id)
@@ -589,9 +617,6 @@ def get_customer(request):
         return JsonResponse(data) 
     return JsonResponse({"error": "Invalid request"}, status=400) 
 
-def calculate_product_cost(request, product_id, width, height, quantity):
-    pass
-
 
 def get_bill_of_materials(request): 
     product_id = request.GET.get("product_id")
@@ -857,6 +882,171 @@ def get_total_bom(request):
     }
 
     return JsonResponse(response_data)
+def download_quotation_excel(request, quotation_id):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Quotation"
+
+    center_alignment = Alignment(horizontal="center")
+    # Title and Company Header
+    ws.merge_cells('A1:I1')
+    ws['A1'] = "CRIVER GLASS AND ALUMINUM CORP."
+    ws['A1'].font = Font(bold=True, size=14)
+    ws['A1'].alignment = center_alignment
+
+    ws.merge_cells('A2:I2')
+    ws['A2'] = "Unit 1-B GV Square Casa Mila Subd. Commonwealth Ave. Ext., Quezon City"
+    ws['A2'].alignment = center_alignment
+
+    ws.merge_cells('A3:I3')
+    ws['A3'] = "Contact nos.: 632.897.2303   Fascimile no.: 632.990.5064"
+    ws['A3'].alignment = center_alignment
+
+    ws.merge_cells('A4:I4')
+    ws['A4'] = "E-mail address: criver.glassandalum@gmail.com"
+    ws['A4'].alignment = center_alignment
+
+    # Quotation Details
+    ws.merge_cells('A6:I6')
+    ws['A6'] = "QUOTATION CONTRACT"
+    ws['A6'].font = Font(bold=True, size=14)
+    ws['A6'].alignment = center_alignment
+
+    ws.merge_cells('A8:B8')
+    ws['A8'] = "Name of Client:"
+    ws.merge_cells('C8:F8')
+    ws['C8'] = "Name of Client:"
+
+    ws.merge_cells('G8:H8')
+    ws['G8'] = "Date:"
+    ws['I8'] = "5.08.23"
+
+    ws.merge_cells('A9:B9')
+    ws['A9'] = "Project:"
+    ws.merge_cells('C9:F9')
+    ws['C9'] = "Project:"
+
+    ws.merge_cells('G9:H9')
+    ws['G9'] = "Reference No.:"
+    ws['I9'] = "2023.001"
+
+    ws.merge_cells('A10:B10')
+    ws['A10'] = "Address:"
+    ws.merge_cells('C10:F10')
+    ws['C10'] = "2023.001"
+
+    ws.merge_cells('G10:H10')
+    ws['G10'] = "Contact No.:"
+    ws['I10'] = "Contact No.:"
+
+    ws.append([])
+    # Table Header
+    headers = ["QTY", "UNIT", "DESCRIPTION", "", "", "", "", "UNIT PRICE", "AMOUNT"]
+    ws.append(headers)
+    ws.merge_cells('C12:G12')
+
+    # Sample data rows (you can dynamically loop your queryset here)
+    ws.append([])
+    ws.append([])
+    rows = [
+        [2, "sets", "2490MM (w)", "X", "450MM (h)", "Type: F-A-A-A-F", "", 152177.65, 304355.29],
+        [2, "sets", "1100MM (w)", "X", "1200MM (h)", "Type: S-S", "", 0.00, 0.00],
+        # add more rows as needed
+    ]
+    for row in rows:
+        ws.append(row)
+    table_end_row = ws.max_row
+    last_data_row = ws.max_row + 1
+    # TOTAL
+    ws[f'G{last_data_row}'] = "TOTAL:"
+    ws[f'I{last_data_row}'] = 304355.29
+    ws[f'G{last_data_row}'].font = Font(bold=True)
+
+    # V.A.T.
+    last_data_row += 1
+    ws[f'G{last_data_row}'] = "V.A.T.:"
+    ws[f'I{last_data_row}'] = ""
+    ws[f'G{last_data_row}'].font = Font(bold=True)
+
+    # GRAND TOTAL
+    last_data_row += 1
+    ws[f'G{last_data_row}'] = "GRAND TOTAL COST"
+    ws[f'I{last_data_row}'] = 304355.29
+    ws[f'G{last_data_row}'].font = Font(bold=True)
+
+    thin = Side(border_style="thin", color="000000")
+    border = Border(top=thin, left=thin, right=thin, bottom=thin)
+
+    start_row = 12 
+    end_row = last_data_row 
+
+    for row in range(table_end_row, end_row + 1):
+        for col in range(1, 10):  
+            cell = ws.cell(row=row, column=col)
+
+            # Apply outer borders only
+            if row == start_row:
+                cell.border = Border(top=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, bottom=None)
+            elif row == end_row:
+                cell.border = Border(bottom=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, top=None)
+            elif col == 1:
+                cell.border = Border(left=thin, right=thin if col == 9 else None, top=None, bottom=None)
+            elif col == 9:
+                cell.border = Border(right=thin, left=thin if col == 1 else None, top=None, bottom=None)
+            else:
+                cell.border = Border(top=None, left=None, right=None, bottom=None)
+
+    for row in range(start_row, table_end_row + 1):
+        for col in range(1, 10): 
+            cell = ws.cell(row=row, column=col)
+
+            # Apply outer borders only
+            if row == start_row:
+                cell.border = Border(top=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, bottom=None)
+            elif row == table_end_row:
+                cell.border = Border(bottom=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, top=None)
+            elif col == 1:
+                cell.border = Border(left=thin, right=thin if col == 9 else None, top=None, bottom=None)
+            elif col == 9:
+                cell.border = Border(right=thin, left=thin if col == 1 else None, top=None, bottom=None)
+            else:
+                cell.border = Border(top=None, left=None, right=None, bottom=None)
+
+    # Apply additional borders to columns A, B, H, and I
+    for col in ['A', 'B', 'H', 'I']:
+        for row in range(12, table_end_row + 1):
+            cell = ws[f'{col}{row}']
+            
+            # Check if it's the first or last row for top/bottom borders
+            top_border = thin if row == 12 else None
+            bottom_border = thin if row == table_end_row else None
+            
+            # Apply the borders (left and right borders are already applied)
+            cell.border = Border(
+                top=top_border, 
+                left=thin,
+                right=thin,
+                bottom=bottom_border
+            )
+
+
+    # Set column widths for better formatting
+    ws.column_dimensions['A'].width = 8
+    ws.column_dimensions['B'].width = 7
+    ws.column_dimensions['C'].width = 11
+    ws.column_dimensions['D'].width = 6
+    ws.column_dimensions['E'].width = 14
+    ws.column_dimensions['F'].width = 10
+    ws.column_dimensions['G'].width = 8
+    ws.column_dimensions['H'].width = 9
+    ws.column_dimensions['I'].width = 11
+
+
+    # Return Excel response
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=quotation.xlsx'
+    wb.save(response)
+    return response
 
 # misc for the faq and about
 def faq(request):
