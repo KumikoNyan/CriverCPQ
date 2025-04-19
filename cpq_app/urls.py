@@ -48,6 +48,7 @@ urlpatterns = [
 
     # misc URLs
     path('faq/', views.faq, name='faq'),
-    path('about/', views.about, name='about')
+    path('about/', views.about, name='about'),
+    path('feedback/', views.feedback, name='feedback')
 
 ]

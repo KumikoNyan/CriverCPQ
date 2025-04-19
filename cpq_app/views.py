@@ -1205,3 +1205,9 @@ def about(request):
         return redirect('login')
 
     return render(request, 'cpq_app/about.html')
+
+def feedback(request):
+    if not is_logged_in(request):
+        return redirect('login')
+
+    return render(request, 'cpq_app/feedback.html')

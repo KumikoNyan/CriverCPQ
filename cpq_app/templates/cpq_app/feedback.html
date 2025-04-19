@@ -1,0 +1,195 @@
+{% load static %}
+
+{% block content %}
+<div class="feedback-container">
+    <div class="feedback-header">
+        <a href="{% url 'quotation_list' %}" class="back-button">
+            <i class="bi bi-arrow-left-circle-fill"></i> Back
+        </a>
+    </div>
+    <div class="feedback-card">
+        <h1 class="feedback-title emphasized">We'd love your feedback!</h1>
+        <form id="feedbackForm">
+            <div class="form-group">
+                <label for="name" class="form-label">Name (optional)</label>
+                <input type="text" class="form-control" id="name" placeholder="Your name">
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="form-label">Email (optional)</label>
+                <input type="email" class="form-control" id="email" placeholder="you@example.com">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Rate your experience</label>
+                <div class="rating-group">
+                    <input type="radio" id="rating1" name="rating" value="1">
+                    <label for="rating1">😞</label>
+                    <input type="radio" id="rating2" name="rating" value="2">
+                    <label for="rating2">😐</label>
+                    <input type="radio" id="rating3" name="rating" value="3">
+                    <label for="rating3">🙂</label>
+                    <input type="radio" id="rating4" name="rating" value="4">
+                    <label for="rating4">😄</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="comments" class="form-label">Comments</label>
+                <textarea class="form-control" id="comments" rows="5" placeholder="Let us know what you think!"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="submit-button" onclick="thankUser()">Submit Feedback</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Open+Sans:wght@400;500&display=swap');
+
+    body {
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    .feedback-container {
+        background-color: #f8f9fa;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .feedback-header {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        color: #007bff;
+        text-decoration: none;
+        font-size: 1rem;
+        transition: color 0.15s ease-in-out;
+    }
+
+    .back-button:hover {
+        color: #0056b3;
+    }
+
+    .back-button i {
+        font-size: 1.2rem;
+        margin-right: 5px;
+    }
+
+    .feedback-card {
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        width: 100%;
+        margin-top: 60px;
+    }
+
+    
+    .feedback-title.emphasized {
+        color: #28a745; 
+        font-size: 2.5rem; 
+        font-weight: 700; 
+        text-transform: uppercase; 
+        letter-spacing: 0.05em; 
+        margin-bottom: 30px; 
+        text-align: center;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #495057;
+        font-weight: 500;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        font-size: 1rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .rating-group {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .rating-group input[type="radio"] {
+        display: none;
+    }
+
+    .rating-group label {
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 5px;
+        transition: background-color 0.2s ease-in-out;
+        border: 1px solid transparent;
+    }
+
+    .rating-group label:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    .rating-group input[type="radio"]:checked + label {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .button-group {
+        display: flex;
+        justify-content: center;
+    }
+
+    .submit-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .submit-button:hover {
+        background-color: #0056b3;
+    }
+</style>
+
+<script>
+    function thankUser() {
+        alert("Thank you for your valuable feedback!");
+        document.getElementById("feedbackForm").reset();
+    }
+</script>
+
+{% endblock %}
