@@ -39,6 +39,9 @@ def login(request):
     return render(request, 'cpq_app/login.html')
 
 def logout(request):
+    if not is_logged_in(request):
+        return redirect('login')
+        
     request.session.flush()
     return redirect('login')
 

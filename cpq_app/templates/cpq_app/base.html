@@ -186,14 +186,13 @@
                     </li>
                 </ul>
                 <ul class="navbar-nav me-3">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle px-3" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle me-1"></i> Account
+                    <li class="nav-item d-inline-flex">
+                        <a class="nav-link px-3 me-2" href="{% url 'create_account' %}" role="button">
+                            <i class="bi bi-person-circle me-1"></i> Create Account
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'create_account' %}"><i class="bi bi-person-plus me-2"></i>Create Account</a></li>
-                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                        </ul>
+                        <a class="nav-link px-3" href="{% url 'logout' %}" role="button">
+                            <i class="bi bi-power me-1"></i> Logout
+                        </a>
                     </li>
                 </ul>
             </div>
