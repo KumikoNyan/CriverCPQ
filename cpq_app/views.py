@@ -92,6 +92,7 @@ def index(request):
 def quotation_list(request):
     if not is_logged_in(request):
         return redirect('login')
+
     quotations = Quotation.objects.all()
     quotation_data = []
     for quotation in quotations:
@@ -686,7 +687,7 @@ def create_material(request):
             return JsonResponse(response)
     return render(request, 'cpq_app/create_material.html', {'suppliers': suppliers, 'supplier_count': supplier_count})
 
-def supplier_operations(supplier):
+def supplier_operations(request, supplier):
     account_level = request.session.get("account_level")
 
     if account_level != "superuser":
