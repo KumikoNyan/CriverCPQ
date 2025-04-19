@@ -2,20 +2,100 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from .models import *
 from django.views.decorators.csrf import csrf_exempt
-import json
 from django.urls import reverse
+from django.contrib.auth.hashers import make_password, check_password
 from collections import defaultdict
+import json
 
-# Change welcome message later or remove if not needed
+# access control via session-based checker - a simple logic to check if superuser or not
+def is_logged_in(request):
+    return request.session.get("account_id", None) is not None
+
+def is_superuser(request):
+    return request.session.get("is_superuser", False)
+
+def login(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        try:
+            account = Account.objects.get(account_name=username)
+
+            if check_password(password, account.account_password):
+                request.session["account_id"] = account.account_id
+                request.session["account_level"] = account.account_level
+                request.session["is_superuser"] = account.is_superuser
+
+                return redirect('quotation_list' if account.account_level == 'regular' else 'product_list')
+            else:
+                return render(request, 'cpq_app/login.html', {'error': 'Incorrect password'})
+        except Account.DoesNotExist:
+            return render(request, 'cpq_app/login.html', {'error': 'Account does not exist'})
+
+    return render(request, 'cpq_app/login.html')
+
+def logout(request):
+    request.session.flush()
+    return redirect('login')
+
+def access_error(request):
+    return render(request, 'cpq_app/access_error.html')
+
+def create_account(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+    
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        account_level = request.POST.get("account_level")
+        is_superuser = (account_level == "superuser")
+
+        # hashed password for security reasons
+        hashed_password = make_password(password)
+
+        Account.objects.create(
+            account_name=username,
+            account_password=hashed_password,
+            account_level=account_level,
+            is_superuser=is_superuser
+        )
+
+        return redirect('login')  # or wherever you want to redirect
+
+    return render(request, 'cpq_app/create_account.html')
+
+# TEMPORARY superuser seeding view DO NOT ENABLE only use ONCE
+'''def init_create_superuser(request):
+    if Account.objects.filter(account_level='superuser').exists():
+        return JsonResponse({"message": "Superuser already exists."})
+
+    superuser = Account.objects.create(
+        account_name="admin",
+        account_password=make_password("admin123"),
+        account_level="superuser"
+    )
+    return JsonResponse({"message": "Superuser created.", "username": superuser.account_name})'''
+
+# change welcome message later or remove if not needed
 def index(request):
     return JsonResponse({"message": "Welcome Bitch!"})
 
 # quotation views
 def quotation_list(request):
+    if not is_logged_in(request):
+        return redirect('login')
+
     quotations = list(Quotation.objects.values())
     return render(request, 'cpq_app/quotation_list.html', {"quotations": quotations})
 
 def quotation_detail(request, quotation_id):
+    if not is_logged_in(request):
+        return redirect('login')
+
     quotation = get_object_or_404(Quotation, pk=quotation_id)
     return JsonResponse({"quotation": {
         "id": quotation.id,
@@ -25,9 +105,11 @@ def quotation_detail(request, quotation_id):
         "is_active": quotation.is_active_version
     }})
 
-# ideally, this should create a quotation
-@csrf_exempt # not sure if this was the right way, i just skimmed on the tapas project back in msys22
+@csrf_exempt
 def create_quotation(request):
+    if not is_logged_in(request):
+        return redirect('login')
+
     customers = Customer.objects.all()
     suppliers = Supplier.objects.all()
     print(request.POST)
@@ -65,7 +147,7 @@ def create_quotation(request):
         return JsonResponse(response)
     return render(request, 'cpq_app/create_quotation.html', {'customers': customers, 'suppliers': suppliers})
 
-# quotation versioning
+# quotation versioning - NOT WORKING YET
 @csrf_exempt
 def create_quotation_version(request, quotation_id):
     if request.method == "POST":
@@ -92,6 +174,9 @@ def get_quotation_versions(request, quotation_id):
 # quotation item views
 @csrf_exempt
 def add_quotation_item(request, quotation_id):
+    if not is_logged_in(request):
+        return redirect('login')
+
     if request.method == "POST":
         data = json.loads(request.body)
         quotation = get_object_or_404(Quotation, pk=quotation_id)
@@ -120,6 +205,9 @@ def get_quotation_items(request, quotation_id):
 
 # customer views
 def customer_list(request):
+    if not is_logged_in(request):
+        return redirect('login')
+
     customers = Customer.objects.all()
 
     if request.method == "POST":
@@ -136,6 +224,9 @@ def customer_list(request):
     return render(request, 'cpq_app/customer_list.html', {"customers": customers})
 
 def customer_detail(request, customer_id):
+    if not is_logged_in(request):
+        return redirect('login')
+
     customer_object = get_object_or_404(Customer, customer_id=customer_id)
 
     if request.method == "POST":
@@ -169,6 +260,9 @@ def customer_detail(request, customer_id):
     return render(request, 'cpq_app/customer_detail.html', {'customer_object': customer_object})
 
 def add_customer(request):
+    if not is_logged_in(request):
+        return redirect('login')
+
     customers = Customer.objects.all()
 
     if request.method == "POST":
@@ -208,6 +302,11 @@ def delete_product(product_id):
     product_object.delete()
 
 def product_list(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     products = Product.objects.all()
     suppliers = Supplier.objects.all()
     supplier_count = len(suppliers) or 0
@@ -235,6 +334,11 @@ def product_list(request):
     return render(request, 'cpq_app/product_list.html', {"products": products, 'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def product_detail(request, product_id):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     product_object = Product.objects.get(product_id=product_id)
     product_material_object = ProductMaterial.objects.filter(product=product_object)
     suppliers = Supplier.objects.all()
@@ -297,6 +401,11 @@ def product_detail(request, product_id):
     return render(request, 'cpq_app/product_detail.html', {'product': product_object, 'product_materials': product_material_object, 'material_data': material_data_by_suppliers, 'suppliers': suppliers, 'supplier_count': supplier_count, 'selected_supplier_pm_data': selected_supplier_data})
 
 def create_product(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     materials = Material.objects.all()
     suppliers = Supplier.objects.all()
 
@@ -352,6 +461,11 @@ def create_product(request):
 
 # material views
 def material_list(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     materials = Material.objects.all()
     suppliers = Supplier.objects.all()
     supplier_count = len(suppliers) or 0
@@ -377,6 +491,11 @@ def material_list(request):
     return render(request, 'cpq_app/material_list.html', {"materials": materials, 'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def material_detail(request, material_id):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     material_object = Material.objects.get(material_id=material_id)
     finishes = MaterialFinish.objects.filter(material=material_object)
     suppliers = Supplier.objects.all()
@@ -432,6 +551,11 @@ def material_detail(request, material_id):
     return render(request, 'cpq_app/material_detail.html', {'material_object': material_object, 'finishes': finishes, 'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def create_material(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     suppliers = Supplier.objects.all()
     supplier_count = len(suppliers) or 0
     if request.method == "POST":
@@ -474,6 +598,11 @@ def create_material(request):
     return render(request, 'cpq_app/create_material.html', {'suppliers': suppliers, 'supplier_count': supplier_count})
 
 def supplier_operations(supplier):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     supplier_id = supplier["supplier_id"]
     supplier_name = supplier["supplier_name"]
     if supplier_name == "delete":
@@ -545,7 +674,7 @@ def get_material_data_by_suppliers(suppliers, supplier_id = None):
                         "finish_cost": finish.finish_cost,
                     })
 
-                # Categorize based on material_type
+                # categorize based on material_type
                 if material.material_type == "accessory":
                     temp_supplier["accessories"].append(temp_material)
                 elif material.material_type == "glass":
@@ -572,6 +701,9 @@ def delete_material(material_id):
 
 # quotation status tracking
 def update_quotation_status(request, quotation_id, status):
+    if not is_logged_in(request):
+        return redirect('login')
+
     quotation = get_object_or_404(Quotation, pk=quotation_id)
     quotation.quotation_status = status
     quotation.save()
@@ -593,7 +725,12 @@ def calculate_product_cost(request, product_id, width, height, quantity):
     pass
 
 
-def get_bill_of_materials(request): 
+def get_bill_of_materials(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     product_id = request.GET.get("product_id")
     height = float(request.GET.get("item_height"))
     width = float(request.GET.get("item_width"))
@@ -722,6 +859,11 @@ def get_bill_of_materials(request):
 
 
 def get_total_bom(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+
     grand_bom = defaultdict(lambda: {
         "material_name": "",
         "quantity": 0.0,
@@ -860,7 +1002,13 @@ def get_total_bom(request):
 
 # misc for the faq and about
 def faq(request):
+    if not is_logged_in(request):
+        return redirect('login')
+
     return render(request, 'cpq_app/faq.html')
 
 def about(request):
+    if not is_logged_in(request):
+        return redirect('login')
+
     return render(request, 'cpq_app/about.html')
