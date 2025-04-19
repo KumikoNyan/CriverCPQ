@@ -11,17 +11,16 @@ class Customer(models.Model):
     def __str__(self):
         return self.customer_name
 
-# ideally, the Account models should have a: superuser and users
-# only the superuser is allowed to create accounts
 class Account(models.Model):
-    customer = models.OneToOneField(Customer, on_delete=models.CASCADE, primary_key=True)
+    account_id = models.AutoField(primary_key=True)
     account_name = models.CharField(max_length=255)
     account_password = models.CharField(max_length=255)
-    date_created = models.DateTimeField(auto_now_add=True)
-    access_level = models.CharField(max_length=50) # should contain the access level for the current logged in user
+    account_created = models.DateTimeField(auto_now_add=True)
+    account_level = models.CharField(max_length=50, choices=[('regular', 'Regular'), ('superuser', 'Superuser')], default='regular')
+    is_superuser = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.account_name
+        return f"{self.account_name} ({'Superuser' if self.is_superuser else 'Regular'})"
 
 class Supplier(models.Model):
     supplier_id = models.AutoField(primary_key=True)
