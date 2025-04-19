@@ -11,7 +11,7 @@ urlpatterns = [
     path('error/', views.access_error, name='access_error'),
     
     # temp remove after init superuser account - DO NOT ENABLE only use ONCE
-    #path('init_create_superuser/', views.init_create_superuser, name='init_create_superuser'),
+    # path('init_create_superuser/', views.init_create_superuser, name='init_create_superuser'),
     
     # quotation URLs
     path('quotations/', views.quotation_list, name='quotation_list'),

@@ -92,6 +92,7 @@ def index(request):
 def quotation_list(request):
     if not is_logged_in(request):
         return redirect('login')
+
     quotations = Quotation.objects.all()
     quotation_data = []
     for quotation in quotations:
