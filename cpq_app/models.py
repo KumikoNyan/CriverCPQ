@@ -74,6 +74,7 @@ class ProductMaterial(models.Model):
 class Quotation(models.Model):
     quotation_id = models.AutoField(primary_key=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    project = models.CharField(max_length=50)
     date_created = models.DateTimeField(auto_now_add=True)
     quotation_status = models.CharField(max_length=50)
     version_number = models.IntegerField()
@@ -92,14 +93,10 @@ class QuotationItem(models.Model):
     product_labor = models.IntegerField()
     item_height = models.FloatField()
     item_width = models.FloatField()
-    glass_finish = models.ForeignKey(MaterialFinish, on_delete=models.CASCADE, related_name="glass_finish")
-    aluminum_finish = models.ForeignKey(MaterialFinish, on_delete=models.CASCADE, related_name="aluminum_finish")
+    glass_finish = models.CharField(max_length=50, null=True)
+    aluminum_finish = models.CharField(max_length=50, null=True)
     excluded_materials = models.CharField(max_length=50, null=True)
     additional_materials = models.CharField(max_length=50, null=True)
-
-    def save(self, *args, **kwargs):
-        self.total_price = self.item_quantity * self.unit_price
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Item {self.item_id} in Quotation {self.quotation.quotation_id}"

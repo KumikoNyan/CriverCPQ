@@ -32,15 +32,37 @@ def create_quotation(request):
     suppliers = Supplier.objects.all()
     print(request.POST)
     if request.method == "POST":
-        data = json.loads(request.POST)
-        customer = get_object_or_404(Customer, customer_id=data['customer_id'])
+        response = {}
+        response['status'] = True
+        customer = get_object_or_404(Customer, customer_id=request.POST.get("customer_id"))
+        project = request.POST.get("project")
         quotation = Quotation.objects.create(
-            date_created=data['date_created'],
-            quotation_status='Draft',
+            customer=customer,
+            project=project,
+            quotation_status='new',
             version_number=1,
             is_active_version=True
         )
-        return JsonResponse({"message": "Quotation created successfully", "quotation_id": quotation.id})
+        print(request.POST)
+
+        for item in json.loads(request.POST.get('item_data')):
+            product = Product.objects.get(product_id=item['product_id'])
+
+            QuotationItem.objects.create(
+                quotation=quotation,
+                product=product,
+                item_quantity=int(item['item_quantity']),
+                product_margin=int(item['submit_margin']),
+                product_labor=int(item['submit_labor']),
+                item_height=float(item['item_height']),
+                item_width=float(item['item_width']),
+                glass_finish=item['glass_finish'],
+                aluminum_finish=['aluminum_finish'],
+                excluded_materials=item.get('excluded_materials', ''),
+                additional_materials=''  # Or adjust if this is collected from frontend later
+            )
+        response['url'] = reverse('quotation_list')
+        return JsonResponse(response)
     return render(request, 'cpq_app/create_quotation.html', {'customers': customers, 'suppliers': suppliers})
 
 # quotation versioning
