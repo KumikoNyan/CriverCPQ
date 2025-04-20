@@ -143,6 +143,7 @@
             <label for="product">Product</label>
             <select class="product_id form-select" id="product" name="product">
                 <option value="" selected disabled>Select Product</option>
+                <option value="delete" hidden></option>
             </select>
         </div>
         <div class="col-md-3">
@@ -304,6 +305,7 @@
                     success: function (response) {
                         default_prodSelect.empty();  
                         default_prodSelect.append('<option value="" disabled selected>Select Product</option>');
+                        default_prodSelect.append('<option value="delete" hidden></option>');
         
                         if (response.products.length > 0) {
                             response.products.forEach(function (product) {
@@ -336,6 +338,7 @@
                     success: function (response) {
                         productSelect.empty();  
                         productSelect.append('<option value="" disabled selected>Select Product</option>');
+                        productSelect.append('<option value="delete" hidden></option>');
         
                         if (response.products.length > 0) {
                             response.products.forEach(function (product) {
@@ -497,6 +500,10 @@
                 let item_height = item_row.find(".item_height").val();
                 let glass_finish = item_row.find(".glass_finish").val();
                 let aluminum_finish = item_row.find(".aluminum_finish").val();
+                
+                if (product_id === 'delete' || product_id === null) {
+                    return; 
+                }
                 
                 let excluded_materials = [];
     
