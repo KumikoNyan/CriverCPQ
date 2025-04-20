@@ -11,15 +11,20 @@ A Configure, Price, and Quote (CPQ) system for our client Criver Glass &amp; Alu
 - Optional: [Github Desktop](https://desktop.github.com/download/)
 
 ## Features
-- CRUD Quotations
-- CRUD Materials
-- CRUD Products
-- CRUD Suppliers
-- CRUD Customers
+- CRUD Operations:
+  - ```Quotations```
+  - ```Materials```
+  - ```Products```
+  - ```Suppliers```
+  - ```Customers```
 - Role-based Authentication
   - ```superuser```
   - ```regular```
 - Export tables to Spreadsheet
+- Streamlined UI
+  - ```Dark Mode```
+  - ```Icons```
+  - ```Google Fonts```
 
 ## To Run the Project
 1. ```python manage.py runserver```
