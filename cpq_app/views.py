@@ -97,6 +97,7 @@ def quotation_list(request):
         return redirect('login')
 
     quotations = Quotation.objects.all()
+    #quotations = Quotation.objects.filter(is_active_version=True) #ADD THIS IF WE WANT TO SPECIFICALLY DISPLAY ONLY THE NEWEST VERSION IN THIS SCREEN
     quotation_data = []
     for quotation in quotations:
         temp = {
@@ -262,14 +263,25 @@ def create_quotation(request):
 def create_quotation_version(request, quotation_id):
     if request.method == "POST":
         old_quotation = get_object_or_404(Quotation, pk=quotation_id)
-        new_version_number = old_quotation.version_number + 1
-        
+        #Look for all old and mark inactive for sanity sake
+        Quotation.objects.filter(
+            customer=old_quotation.customer,
+            project=old_quotation.project
+        ).update(is_active_version=False)
+        # Get new version number by checking the heighest
+        latest_version = Quotation.objects.filter(
+            customer=old_quotation.customer,
+            project=old_quotation.project
+        ).aggregate(models.Max('version_number'))['version_number__max'] or 0
+        #New Quotation
         new_quotation = Quotation.objects.create(
             date_created=old_quotation.date_created,
             quotation_status=old_quotation.quotation_status,
-            version_number=new_version_number,
+            version_number=latest_version + 1,#I hope this works
             is_active_version=True # sets the new quotation as active
         )
+
+        #I think this can be deleted with the other one?
         old_quotation.is_active_version = False
         old_quotation.save() # saves the old version/s and sets it to not active
         
