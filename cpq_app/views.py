@@ -728,11 +728,7 @@ def create_material(request):
             return JsonResponse(response)
     return render(request, 'cpq_app/create_material.html', {'suppliers': suppliers, 'supplier_count': supplier_count})
 
-def supplier_operations(request, supplier):
-    account_level = request.session.get("account_level")
-
-    if account_level != "superuser":
-        return redirect('access_error')
+def supplier_operations(supplier):
 
     supplier_id = supplier["supplier_id"]
     supplier_name = supplier["supplier_name"]
