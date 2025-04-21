@@ -132,27 +132,38 @@ def quotation_detail(request, quotation_id):
     customers = Customer.objects.all()
     suppliers = Supplier.objects.all()
     print(request.POST)
-    
-    #to edit
+
     if request.method == "POST":
-        response = {}
-        response['status'] = True
-        quotation_id = request.POST.get("quotation_id")
-        quotation = Quotation.objects.get(quotation_id=quotation_id)
+        response = {'status': True}
+
+       
+        old_quotation = get_object_or_404(Quotation, pk=quotation_id)
         customer = get_object_or_404(Customer, customer_id=request.POST.get("customer_id"))
         project = request.POST.get("project")
-        quotation.customer = customer
-        quotation.project = project
-        quotation.quotation_status = 'new'
-        quotation.version_number = 1
-        quotation.is_active_version=True
 
-        QuotationItem.objects.filter(quotation=quotation).delete()
+        Quotation.objects.filter(
+            customer=old_quotation.customer,
+            project=old_quotation.project
+        ).update(is_active_version=False)
+
+        latest_version = Quotation.objects.filter(
+            customer=old_quotation.customer,
+            project=old_quotation.project
+        ).aggregate(models.Max('version_number'))['version_number__max'] or 0
+
+        new_quotation = Quotation.objects.create(
+            customer=customer,
+            project=project,
+            quotation_status='new',
+            version_number=latest_version + 1,
+            is_active_version=True
+        )
+
         for item in json.loads(request.POST.get('item_data')):
             product = Product.objects.get(product_id=item['product_id'])
 
             QuotationItem.objects.create(
-                quotation=quotation,
+                quotation=new_quotation,
                 product=product,
                 item_quantity=int(item['item_quantity']),
                 product_margin=int(item['submit_margin']),
@@ -162,12 +173,13 @@ def quotation_detail(request, quotation_id):
                 glass_finish=item['glass_finish'],
                 aluminum_finish=item['aluminum_finish'],
                 excluded_materials=item.get('excluded_materials', ''),
-                additional_materials='',  # Or adjust if this is collected from frontend later
+                additional_materials='',  # update later if frontend supports it
                 item_label=item['item_label']
             )
+
         response['url'] = reverse('quotation_list')
         return JsonResponse(response)
-    
+
     quotation = Quotation.objects.get(quotation_id=quotation_id)
     quotation_data = {
         'quotation_id': quotation.quotation_id,
@@ -198,27 +210,37 @@ def quotation_detail(request, quotation_id):
                 'excluded_materials': item.excluded_materials,
                 'additional_materials': item.additional_materials,
                 'item_label': item.item_label
-            } for item in QuotationItem.objects.filter(quotation = quotation)
+            } for item in QuotationItem.objects.filter(quotation=quotation)
         ],
     }
-    print(quotation_data['items'])
-    
-    quotation_data['quotation_margin'] = quotation_data['items'][0]['item_margin']
-    quotation_data['quotation_labor'] = quotation_data['items'][0]['item_labor']
-    
+
+    if quotation_data['items']:
+        quotation_data['quotation_margin'] = quotation_data['items'][0]['item_margin']
+        quotation_data['quotation_labor'] = quotation_data['items'][0]['item_labor']
+    else:
+        quotation_data['quotation_margin'] = 0
+        quotation_data['quotation_labor'] = 0
+
     supplier_products = defaultdict(list)
-
     products = Product.objects.select_related('supplier').all()
-
     for product in products:
         supplier_name = product.supplier.supplier_name
         supplier_products[supplier_name].append({
             'id': product.product_id,
             'name': product.product_name
         })
-        
-    supplier_products = dict(supplier_products)
-    return render(request, 'cpq_app/quotation_detail.html', {'customers': customers, 'suppliers': suppliers, 'quotation': quotation_data, 'item_count': len(QuotationItem.objects.filter(quotation = quotation)), 'supplier_products': supplier_products})
+
+    return render(
+        request,
+        'cpq_app/quotation_detail.html',
+        {
+            'customers': customers,
+            'suppliers': suppliers,
+            'quotation': quotation_data,
+            'item_count': len(quotation_data['items']),
+            'supplier_products': supplier_products
+        }
+    )
 
 @csrf_exempt
 def create_quotation(request):
