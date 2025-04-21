@@ -1,4 +1,5 @@
 from django.db import models
+from collections import defaultdict
 
 # Models
 class Customer(models.Model):
@@ -66,6 +67,7 @@ class ProductMaterial(models.Model):
     scale_by_height = models.BooleanField(default=False)
     scale_by_width = models.BooleanField(default=False)
     scale_ratio = models.DecimalField(max_digits=5, decimal_places=2, null=True)
+    scale_ratio_second = models.DecimalField(max_digits=5, decimal_places=2, null=True)
 
     def __str__(self):
         return f"{self.material.material_name} for {self.product.product_name}"
@@ -85,6 +87,7 @@ class Quotation(models.Model):
 
 class QuotationItem(models.Model):
     item_id = models.AutoField(primary_key=True)
+    item_label = models.CharField(max_length=50)
     quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     item_quantity = models.IntegerField()
@@ -99,3 +102,49 @@ class QuotationItem(models.Model):
 
     def __str__(self):
         return f"Item {self.item_id} in Quotation {self.quotation.quotation_id}"
+    
+    def get_unit_price(self):
+        height = self.item_height
+        width = self.item_width
+        quantity = self.item_quantity
+        product_margin = self.product_margin
+        labor_margin = self.product_labor
+        glass_finish = self.glass_finish or ""
+        aluminum_finish = self.aluminum_finish or ""
+
+        # Parse excluded materials list from string if it's stored as CSV
+        excluded_materials = self.excluded_materials.split(',') if self.excluded_materials else []
+
+        materials = ProductMaterial.objects.filter(product=self.product)
+        per_item_cost = 0.0
+
+        for m in materials:
+            mat_id = str(m.material.material_id)
+            if mat_id in excluded_materials:
+                continue
+
+            mat = m.material
+            unit_cost = 0.0
+
+            if mat.material_type == "accessory":
+                single_unit = 1
+                unit_cost = float(mat.material_cost)
+
+            elif mat.material_type == "glass":
+                finish_obj = MaterialFinish.objects.get(finish_name=glass_finish, material=mat)
+                unit_cost = float(finish_obj.finish_cost)
+                single_unit = (height * float(m.scale_ratio_second or 0)) * (width * float(m.scale_ratio or 0))
+
+            else:  # aluminum
+                finish_obj = MaterialFinish.objects.get(finish_name=aluminum_finish, material=mat)
+                unit_cost = float(finish_obj.finish_cost)
+                dimension = height if m.scale_by_height else width
+                single_unit = dimension * float(m.scale_ratio or 0)
+
+            single_item_qty = single_unit * float(m.material_quantity)
+            single_item_cost = single_item_qty * unit_cost
+
+            per_item_cost += single_item_cost
+
+        unit_price = per_item_cost * (1 + (labor_margin + product_margin) / 100)
+        return round(unit_price, 2)

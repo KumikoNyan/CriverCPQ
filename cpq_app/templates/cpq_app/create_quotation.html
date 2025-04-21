@@ -170,6 +170,10 @@
     <!-- Quantity and Dimensions -->
     <div class="row mt-2 align-items-center">
         <div class="col-md-2">
+            <label>Item Label</label>
+            <input type="text" class="item_label form-control" placeholder="Item Label" value="{{item.item_label}}">
+        </div>
+        <div class="col-md-2">
             <label>Quantity</label>
             <input type="number" class="item_quantity form-control" placeholder="Qty" value="1" min="1">
         </div>
@@ -500,6 +504,7 @@
                 let item_height = item_row.find(".item_height").val();
                 let glass_finish = item_row.find(".glass_finish").val();
                 let aluminum_finish = item_row.find(".aluminum_finish").val();
+                let item_label = item_row.find(".item_label").val();
                 
                 if (product_id === 'delete' || product_id === null) {
                     return; 
@@ -546,6 +551,7 @@
                     'excluded_materials': excluded_materials,
                     'submit_margin': submit_margin,
                     'submit_labor':submit_labor,
+                    'item_label':item_label,
                 });
                 
             });

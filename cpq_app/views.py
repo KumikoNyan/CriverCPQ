@@ -9,6 +9,7 @@ import json
 from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, Border, Side
+from datetime import datetime
 
 # access control via session-based checker - a simple logic to check if superuser or not
 def is_logged_in(request):
@@ -160,7 +161,8 @@ def quotation_detail(request, quotation_id):
                 glass_finish=item['glass_finish'],
                 aluminum_finish=item['aluminum_finish'],
                 excluded_materials=item.get('excluded_materials', ''),
-                additional_materials=''  # Or adjust if this is collected from frontend later
+                additional_materials='',  # Or adjust if this is collected from frontend later
+                item_label=item['item_label']
             )
         response['url'] = reverse('quotation_list')
         return JsonResponse(response)
@@ -194,9 +196,12 @@ def quotation_detail(request, quotation_id):
                 'aluminum_finish': item.aluminum_finish,
                 'excluded_materials': item.excluded_materials,
                 'additional_materials': item.additional_materials,
+                'item_label': item.item_label
             } for item in QuotationItem.objects.filter(quotation = quotation)
         ],
     }
+    print(quotation_data['items'])
+    
     quotation_data['quotation_margin'] = quotation_data['items'][0]['item_margin']
     quotation_data['quotation_labor'] = quotation_data['items'][0]['item_labor']
     
@@ -251,7 +256,8 @@ def create_quotation(request):
                 glass_finish=item['glass_finish'],
                 aluminum_finish=item['aluminum_finish'],
                 excluded_materials=item.get('excluded_materials', ''),
-                additional_materials=''  # need to add additional material support
+                additional_materials='',  # need to add additional material support
+                item_label=item['item_label'],
             )
         response['url'] = reverse('quotation_list')
         return JsonResponse(response)
@@ -491,12 +497,15 @@ def product_detail(request, product_id):
                 material_quantity = pm["material_quantity"]
                 material_scale = pm["material_scale"]
                 scale_ratio = pm["scale_ratio"]
+                scale_ratio_second = pm.get("scale_ratio_second", None)
 
                 print(scale_ratio)
 
                 material = get_object_or_404(Material, material_id=material_id)
 
-                if material_scale == 'by_height':
+                if scale_ratio_second:
+                    new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_by_width=True, scale_ratio=scale_ratio, scale_ratio_second=scale_ratio_second)
+                elif material_scale == 'by_height':
                     new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_ratio=scale_ratio)
                 elif material_scale == "by_width":
                     new_pm = ProductMaterial.objects.create(product=product, material=material, material_quantity=material_quantity, scale_by_width=True, scale_ratio=scale_ratio)
@@ -865,8 +874,14 @@ def get_bill_of_materials(request):
         if mat.material_type == "accessory":
             single_unit = 1
             unit_cost = float(mat.material_cost)
+        elif mat.material_type == "glass":
+            finish_name = glass_finish
+            finish_obj = MaterialFinish.objects.get(finish_name=finish_name, material=mat)
+            unit_cost = float(finish_obj.finish_cost)
+            finish = finish_name
+            single_unit = (height*float(m.scale_ratio_second))*(width*float(m.scale_ratio))
         else:
-            finish_name = glass_finish if mat.material_type == "glass" else aluminum_finish
+            finish_name = aluminum_finish
             finish_obj = MaterialFinish.objects.get(finish_name=finish_name, material=mat)
             unit_cost = float(finish_obj.finish_cost)
             finish = finish_name
@@ -1025,8 +1040,14 @@ def get_total_bom(request):
                 material_finish = ""
                 cost = float(material_obj.material_cost)
                 material_single_unit = 1
+            elif material_type =="glass":
+                material_finish = glass_finish
+                finish_object = MaterialFinish.objects.get(finish_name=material_finish, material=material_obj)
+                cost = float(finish_object.finish_cost)
+                scale_ratio_second = float(material.scale_ratio_second)
+                material_single_unit = (height*float(scale_ratio_second))*(width*float(scale_ratio))
             else:
-                material_finish = glass_finish if material_type == "glass" else aluminum_finish
+                material_finish = aluminum_finish
                 finish_object = MaterialFinish.objects.get(finish_name=material_finish, material=material_obj)
                 cost = float(finish_object.finish_cost)
                 material_single_unit = height * scale_ratio if scale_by_height else width * scale_ratio
@@ -1112,6 +1133,8 @@ def download_quotation_excel(request, quotation_id):
     ws = wb.active
     ws.title = "Quotation"
 
+    quotation = Quotation.objects.get(quotation_id=quotation_id)
+
     center_alignment = Alignment(horizontal="center")
     # Title and Company Header
     ws.merge_cells('A1:I1')
@@ -1140,51 +1163,74 @@ def download_quotation_excel(request, quotation_id):
     ws.merge_cells('A8:B8')
     ws['A8'] = "Name of Client:"
     ws.merge_cells('C8:F8')
-    ws['C8'] = "Name of Client:"
+    ws['C8'] = quotation.customer.customer_name
 
     ws.merge_cells('G8:H8')
     ws['G8'] = "Date:"
-    ws['I8'] = "5.08.23"
+    ws['I8'] = datetime.today().date()
 
     ws.merge_cells('A9:B9')
     ws['A9'] = "Project:"
     ws.merge_cells('C9:F9')
-    ws['C9'] = "Project:"
+    ws['C9'] = quotation.project
 
     ws.merge_cells('G9:H9')
     ws['G9'] = "Reference No.:"
-    ws['I9'] = "2023.001"
+    ws['I9'] = "2025.001"
 
     ws.merge_cells('A10:B10')
     ws['A10'] = "Address:"
     ws.merge_cells('C10:F10')
-    ws['C10'] = "2023.001"
+    ws['C10'] = quotation.customer.customer_address
 
     ws.merge_cells('G10:H10')
     ws['G10'] = "Contact No.:"
-    ws['I10'] = "Contact No.:"
+    ws['I10'] = quotation.customer.customer_mobile
 
     ws.append([])
     # Table Header
     headers = ["QTY", "UNIT", "DESCRIPTION", "", "", "", "", "UNIT PRICE", "AMOUNT"]
     ws.append(headers)
     ws.merge_cells('C12:G12')
+    for cell in ["A12", "B12", "C12", "H12", "I12"]:
+        ws[cell].font = Font(bold=True)
+        ws[cell].alignment = center_alignment
 
     # Sample data rows (you can dynamically loop your queryset here)
     ws.append([])
     ws.append([])
-    rows = [
-        [2, "sets", "2490MM (w)", "X", "450MM (h)", "Type: F-A-A-A-F", "", 152177.65, 304355.29],
-        [2, "sets", "1100MM (w)", "X", "1200MM (h)", "Type: S-S", "", 0.00, 0.00],
-        # add more rows as needed
-    ]
-    for row in rows:
-        ws.append(row)
+
+    sum_total_price = 0
+    for item in QuotationItem.objects.filter(quotation=quotation):
+        unit_price = item.get_unit_price()
+        quantity = item.item_quantity
+        total_price = unit_price*quantity
+        ws.append(["", "", "", "", "", "", "", "", ""])  # Placeholder for spacing
+        label_row = ws.max_row
+        ws.cell(row=label_row, column=3, value=f"{item.item_label}").font = Font(bold=True)
+        detail_row = [
+            quantity,
+            "sets",
+            f"{item.item_width} (w)",
+            "X",
+            f"{item.item_height} (h)",
+            f"{item.product.product_name}",
+            "",
+            unit_price,
+            total_price
+        ]
+        ws.append(detail_row)
+
+        detail_row_num = ws.max_row
+        for col in [1, 2, 3, 4, 5]: 
+            ws.cell(row=detail_row_num, column=col).alignment = Alignment(horizontal="center")
+
+        sum_total_price += total_price
     table_end_row = ws.max_row
     last_data_row = ws.max_row + 1
     # TOTAL
     ws[f'G{last_data_row}'] = "TOTAL:"
-    ws[f'I{last_data_row}'] = 304355.29
+    ws[f'I{last_data_row}'] = sum_total_price
     ws[f'G{last_data_row}'].font = Font(bold=True)
 
     # V.A.T.
@@ -1195,76 +1241,79 @@ def download_quotation_excel(request, quotation_id):
 
     # GRAND TOTAL
     last_data_row += 1
-    ws[f'G{last_data_row}'] = "GRAND TOTAL COST"
-    ws[f'I{last_data_row}'] = 304355.29
-    ws[f'G{last_data_row}'].font = Font(bold=True)
-
-    thin = Side(border_style="thin", color="000000")
-    border = Border(top=thin, left=thin, right=thin, bottom=thin)
+    ws.merge_cells(f'F{last_data_row}:G{last_data_row}')
+    ws[f'F{last_data_row}'] = "GRAND TOTAL COST"
+    ws[f'I{last_data_row}'] = sum_total_price
+    ws[f'F{last_data_row}'].font = Font(bold=True)
 
     start_row = 12 
     end_row = last_data_row 
 
-    for row in range(table_end_row, end_row + 1):
-        for col in range(1, 10):  
+    
+    thin = Side(style="thin")
+
+    for row in range(start_row, end_row + 1):  # Iterating from row 12 to end_row
+        for col in range(1, 10):  # Columns A to I
             cell = ws.cell(row=row, column=col)
 
-            # Apply outer borders only
-            if row == start_row:
-                cell.border = Border(top=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, bottom=None)
-            elif row == end_row:
-                cell.border = Border(bottom=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, top=None)
-            elif col == 1:
-                cell.border = Border(left=thin, right=thin if col == 9 else None, top=None, bottom=None)
-            elif col == 9:
-                cell.border = Border(right=thin, left=thin if col == 1 else None, top=None, bottom=None)
-            else:
-                cell.border = Border(top=None, left=None, right=None, bottom=None)
+            # Determine cell position
+            is_first_row = (row == start_row)
+            is_last_row = (row == end_row)
+            is_table_end_row = (row == table_end_row)
+            is_col_1 = (col == 1)
+            is_col_9 = (col == 9)
+            col_letter = chr(64 + col)  # Convert 1 -> A, 2 -> B, ..., 9 -> I
 
-    for row in range(start_row, table_end_row + 1):
-        for col in range(1, 10): 
-            cell = ws.cell(row=row, column=col)
+            # Determine if the column needs side borders (A, B, H, I)
+            needs_side_borders = col_letter in ['A', 'B', 'H', 'I']
+            is_row_12 = (row == 12)
 
-            # Apply outer borders only
-            if row == start_row:
-                cell.border = Border(top=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, bottom=None)
-            elif row == table_end_row:
-                cell.border = Border(bottom=thin, left=thin if col == 1 else None, right=thin if col == 9 else None, top=None)
-            elif col == 1:
-                cell.border = Border(left=thin, right=thin if col == 9 else None, top=None, bottom=None)
-            elif col == 9:
-                cell.border = Border(right=thin, left=thin if col == 1 else None, top=None, bottom=None)
-            else:
-                cell.border = Border(top=None, left=None, right=None, bottom=None)
+            # Initialize sides to None
+            top = bottom = left = right = None
 
-    # Apply additional borders to columns A, B, H, and I
-    for col in ['A', 'B', 'H', 'I']:
-        for row in range(12, table_end_row + 1):
-            cell = ws[f'{col}{row}']
-            
-            # Check if it's the first or last row for top/bottom borders
-            top_border = thin if row == 12 else None
-            bottom_border = thin if row == table_end_row else None
-            
-            # Apply the borders (left and right borders are already applied)
-            cell.border = Border(
-                top=top_border, 
-                left=thin,
-                right=thin,
-                bottom=bottom_border
-            )
+            # Outer border logic
+            if is_first_row:
+                top = thin
+            if is_last_row or is_table_end_row:
+                bottom = thin
+            if is_col_1:
+                left = thin
+            if is_col_9:
+                right = thin
+
+            # Special full borders for A12 to I12 (row 12)
+            if is_row_12:
+                top = bottom = left = right = thin
+
+            # Apply left/right borders to A, B, H, I from row 12 onwards
+            if needs_side_borders and row >= 12:
+                left = thin
+                right = thin
+                if row == 12:
+                    top = thin
+                if row == table_end_row:
+                    bottom = thin
+
+            # **Check for the bottom-right most cell (I/end_row) and apply a full border**
+            if row == end_row and col == 9:  # Cell I in the last row
+                top = bottom = left = right = thin
+
+            # Assign the combined border
+            cell.border = Border(top=top, bottom=bottom, left=left, right=right)
+
+
 
 
     # Set column widths for better formatting
-    ws.column_dimensions['A'].width = 8
-    ws.column_dimensions['B'].width = 7
-    ws.column_dimensions['C'].width = 11
-    ws.column_dimensions['D'].width = 6
-    ws.column_dimensions['E'].width = 14
-    ws.column_dimensions['F'].width = 10
-    ws.column_dimensions['G'].width = 8
-    ws.column_dimensions['H'].width = 9
-    ws.column_dimensions['I'].width = 11
+    ws.column_dimensions['A'].width = 9
+    ws.column_dimensions['B'].width = 8
+    ws.column_dimensions['C'].width = 12
+    ws.column_dimensions['D'].width = 7
+    ws.column_dimensions['E'].width = 15
+    ws.column_dimensions['F'].width = 11
+    ws.column_dimensions['G'].width = 9
+    ws.column_dimensions['H'].width = 11
+    ws.column_dimensions['I'].width = 12
 
 
     # Return Excel response
