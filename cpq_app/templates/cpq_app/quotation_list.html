@@ -55,6 +55,8 @@
                             <button type="button" class="submit-delete btn btn-danger" data-quotation-id="{{quotation.quotation_id}}">Delete</button>
                             <a href="{% url 'quotation_detail' quotation_id=quotation.quotation_id %}"  class="btn btn-primary">Edit</a>
                             <button class="btn btn-success create-document" data-quotation-id="{{quotation.quotation_id}}">Create Document</a>
+                            <button class="btn btn-primary view-history" data-quotation-group-id="{{quotation.quotation_group_id}}" data-version-number="{{quotation.version_number}}" data-bs-toggle="modal" 
+                            data-bs-target="#versionsModal{{ quotation.quotation_id }}">View History</a>
                         </div>
                     </td>
                 </tr>
@@ -63,9 +65,59 @@
         </table>
     </div>
 </div>
+{% for quotation in quotations %}
+<div class="modal fade" id="versionsModal{{ quotation.quotation_id }}" tabindex="-1" aria-labelledby="myModalLabel{{ quotation.quotation_id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="myModalLabel{{ quotation.quotation_id }}">Previous Versions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="version_container">
+                    {% for version in quotation.previous_versions%}
+                        <a href="{% url 'view_version' quotation_id=version.quotation_id %}"  class="btn btn-primary">View Version #{{version.version_number}}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <script>
     $(document).ready(function () {
+        $('.view-history').on('click', function () {
+            const versionNumber = $(this).data('version-number');
+            const quotationGroupId = $(this).data('quotation-group-id');
+    
+            if (versionNumber > 1) {
+                const versionContainer = $('#versions .version_container');
+                versionContainer.empty(); // Clear the existing content
+    
+                for (let i = versionNumber - 1; i >= 1; i--) {
+                    const versionLink = $('<a>', {
+                        text: `Version ${i}`,
+                        href: `/view_quotation_history?quotation_id=${quotationGroupId}&version_number=${i}`,
+                        class: 'btn btn-link'
+                    });
+    
+                    const versionButton = $('<button>', {
+                        text: `View Version ${i}`,
+                        class: 'btn btn-primary m-1'
+                    }).on('click', function () {
+                        window.location.href = versionLink.attr('href');
+                    });
+    
+                    versionContainer.append(versionButton);
+                }
+    
+                // Show the modal with previous versions
+                $('#versions').modal('show');
+            } else {
+                alert('This quotation has no previous versions.');
+            }
+        });
         $(".submit-supplier").click(function() {
             let isValid = true;
             supplier_data = [];

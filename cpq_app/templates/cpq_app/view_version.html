@@ -6,6 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
+
 </head>
 
 {% block content %}
@@ -15,7 +16,7 @@
         <div class="d-flex align-items-center">
             <a href="/" class="d-flex align-items-center link-body-emphasis text-decoration-none">
                 <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
-                <span class="fs-4">Create Quotation</span>
+                <span class="fs-4">Quotation Details</span>
             </a>
         </div>
         <!-- Right-aligned search form -->
@@ -31,31 +32,32 @@
         <div class="row">
             <div class="col">
                 <label for="name">Customer</label>
-                <select class="customer w-100" id="customer_select">\
-                    <option value="" selected disabled>Select a Customer</option>
+                <select class="customer w-100" id="customer_select" disabled>
+                    <option value="" disabled>Select a Customer</option>
                     {% for customer in customers %}
-                    <option value="{{customer.customer_id}}">{{customer.customer_name}}</option>
+                    <option value="{{customer.customer_id}}"{% if quotation.customer_id == customer.customer_id %}selected{%endif%}>{{customer.customer_name}}</option>
                     {% endfor %}
                     <option value="delete" hidden></option>
                 </select>
             </div>
             <div class="col">
                 <label for="name">Address</label>
-                <input type="text" class="customer_address form-control" placeholder="Address" readonly>
+                <input type="text" class="customer_address form-control" value="{{quotation.customer_address}}" readonly>
+                <input type="text" class="quotation_id form-control" value="{{quotation.quotation_id}}" hidden>
             </div>
             <div class="col">
                 <label for="name">Project</label>
-                <input type="text" class="project form-control" placeholder="Project">
+                <input type="text" class="project form-control" value="{{quotation.project}}" readonly>
             </div>
         </div>
         <div class="row">
             <div class="col">
                 <label for="name">Mobile Number</label>
-                <input type="text" class="customer_mobile form-control" placeholder="Mobile Number" readonly>
+                <input type="text" class="customer_mobile form-control" value="{{quotation.customer_mobile}}"readonly>
             </div>
             <div class="col">
                 <label for="name">Email Address</label>
-                <input type="text" class="customer_email form-control" placeholder="Email Address" readonly>
+                <input type="text" class="customer_email form-control" value="{{quotation.customer_email}}" readonly>
             </div>
         </div>
         <hr>
@@ -68,7 +70,7 @@
         <div class="row">
             <div class="col-2">
                 <label for="supplier_default">Default Supplier</label>
-                <select class="supplier_default form-select" id="supplier" name="supplier_default">
+                <select class="supplier_default form-select" id="supplier" name="supplier_default" disabled>
                     <option value="" selected disabled>Select a Supplier</option>
                     {% for supplier in suppliers %}
                     <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
@@ -77,7 +79,7 @@
             </div>
             <div class="col-2">
                 <label for="finish_default_glass ">Default Aluminum Finish</label>
-                <select class="finish_default_aluminum form-select" id="type" name="type">
+                <select class="finish_default_aluminum form-select" id="type" name="type" disabled>
                     <option value="delete" hidden></option>
                     <option value="" disabled>Select Aluminum Finish</option>
                     <option value="Mill-Finish" selected>Mill-Finish</option>
@@ -88,7 +90,7 @@
             </div>
             <div class="col-2">
                 <label for="finish_default_glass ">Default Glass Finish</label>
-                <select class="finish_default_glass form-select" id="type" name="type">
+                <select class="finish_default_glass form-select" id="type" name="type" disabled>
                     <option value="delete" hidden></option>
                     <option value="" disabled>Select Glass Finish</option>
                     <option value="Clear" selected>Clear</option>
@@ -98,26 +100,98 @@
             </div>
             <div class="col-2">
                 <label for="name">Margin </label>
-                <input type="number" class="quotation_margin form-control" value="30">
+                <input type="number" class="quotation_margin form-control" value="{{quotation.quotation_margin}}" readonly>
             </div>
             <div class="col-2">
                 <label for="name">Labor </label>
-                <input type="number" class="quotation_labor form-control" value="30">
+                <input type="number" class="quotation_labor form-control" value="{{quotation.quotation_labor}}" readonly>
             </div>
         </div>
         <div class="row">  
             <div class="item_container">
+                {% for item in quotation.items %}
+                <div class="quoteItem_row mt-4 card px-3 py-2" id="quoteItem_row{{forloop.counter}}">
+                    <!-- Supplier/Product Row -->
+                    <div class="row">
+                        <div class="col">
+                            <h6 class="fw-bold">Quotation Item #{{forloop.counter}}</h5>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="supplier">Supplier</label>
+                            <select class="supplier form-select" id="supplier" name="supplier" data-product-id="{{item.product}}" disabled>
+                                <option value="" disabled>Select a Supplier</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{supplier.supplier_id}}" {% if item.supplier == supplier.supplier_id%}selected{% endif %}>{{supplier.supplier_name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="product">Product</label>
+                            <select class="product_id form-select" id="product" name="product" disabled>
+                                <option value="" selected disabled>Select Product</option>
+                                <option value="delete" hidden></option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="aluminum_finish">Aluminum Finish</label>
+                            <select class="aluminum_finish bom-finish form-select" id="aluminum_finish" name="aluminum_finish" disabled>
+                                <option value="" disabled>Select Finish</option>
+                                <option value="Mill-Finish" {% if item.aluminum_finish == 'Mill-Finish' %}selected{%endif%}>Mill-Finish</option>
+                                <option value="Anodized" {% if item.aluminum_finish == 'Anodized' %}selected{%endif%}>Anodized</option>
+                                <option value="Analok" {% if item.aluminum_finish == 'Analok' %}selected{%endif%}>Analok</option>
+                                <option value="Powdercoated"{% if item.aluminum_finish == 'Powdercoated' %}selected{%endif%}>Powdercoated</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="glass_finish">Glass Finish</label>
+                            <select class="glass_finish bom-finish form-select" id="glass_finish" name="glass_finish" disabled>
+                                <option value="" disabled selected>Select Glass Finish</option>
+                                <option value="Clear"{% if item.glass_finish == 'Clear' %}selected{%endif%}>Clear</option>
+                                <option value="Tempered"{% if item.glass_finish == 'Tempered' %}selected{%endif%}>Tempered</option>
+                                <option value="Laminated"{% if item.glass_finish == 'Laminated' %}selected{%endif%}>Laminated</option>
+                            </select>
+                        </div>
+                    </div>
+                
+                    <!-- Quantity and Dimensions -->
+                    <div class="row mt-2 align-items-center">
+                        <div class="col-md-2">
+                            <label>Item Label</label>
+                            <input type="text" class="item_label form-control" placeholder="Item Label" value="{{item.item_label}}" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label>Quantity</label>
+                            <input type="number" class="item_quantity form-control" placeholder="Qty" value="{{item.item_quantity}}" min="1" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Dimensions (W x H)</label>
+                            <div class="d-flex align-items-center">
+                                <input type="number" class="item_width form-control text-center" placeholder="Width" value="{{item.item_width}}" min="1" readonly>
+                                <span class="mx-2">X</span>
+                                <input type="number" class="item_height form-control text-center" placeholder="Height" value="{{item.item_height}}" min="1" readonly>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Buttons -->
+                    <div class="row mt-2 align-items-center">
+                        <div class="col-md-10">
+                            <button type="button" class="btn btn-outline-primary bom" data-modal-id="bom_modal{{forloop.counter}}" data-loaded="false">
+                                See Bill of Materials
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
-        <button type="button" class="btn btn-primary mt-2 addItem" id="addItem">Add Item</button>
-        <button type="button" class="btn btn-primary mt-2 ms-2 addItem" id="total_bom">Total Bill of Materials</button>
+        <button type="button" class="btn btn-primary mt-2 ms-2" id="total_bom">Total Bill of Materials</button>
 
         <div class="row pt-3 mt-3">
             <div class="col-6">
-                <a href="{% url 'quotation_list' %}" class="btn btn-secondary w-100">Cancel</a>
-            </div>
-            <div class="col-6">
-                <button type="button" class="submit-btn btn btn-primary w-100">Create Quote</button>
+                <a href="{% url 'quotation_list' %}" class="btn btn-secondary w-100">Back</a>
             </div>
         </div>
     </form>
@@ -132,7 +206,7 @@
     <div class="row">
         <div class="col-md-3">
             <label for="supplier">Supplier</label>
-            <select class="supplier form-select" id="supplier" name="supplier">
+            <select class="supplier form-select" id="supplier supplier_template" name="supplier" disabled>
                 <option value="" selected disabled>Select a Supplier</option>
                 {% for supplier in suppliers %}
                 <option value="{{supplier.supplier_id}}">{{supplier.supplier_name}}</option>
@@ -141,14 +215,14 @@
         </div>
         <div class="col-md-3">
             <label for="product">Product</label>
-            <select class="product_id form-select" id="product" name="product">
+            <select class="product_id form-select" id="product" name="product" disabled>
                 <option value="" selected disabled>Select Product</option>
                 <option value="delete" hidden></option>
             </select>
         </div>
         <div class="col-md-3">
             <label for="aluminum_finish">Aluminum Finish</label>
-            <select class="aluminum_finish bom-finish form-select" id="aluminum_finish" name="aluminum_finish">
+            <select class="aluminum_finish bom-finish form-select" id="aluminum_finish" name="aluminum_finish" disabled>
                 <option value="" disabled>Select Finish</option>
                 <option value="Mill-Finish" selected>Mill-Finish</option>
                 <option value="Anodized">Anodized</option>
@@ -158,7 +232,7 @@
         </div>
         <div class="col-md-3">
             <label for="glass_finish">Glass Finish</label>
-            <select class="glass_finish bom-finish form-select" id="glass_finish" name="glass_finish">
+            <select class="glass_finish bom-finish form-select" id="glass_finish" name="glass_finish" disabled>
                 <option value="" disabled selected>Select Glass Finish</option>
                 <option value="Clear">Clear</option>
                 <option value="Tempered">Tempered</option>
@@ -171,18 +245,18 @@
     <div class="row mt-2 align-items-center">
         <div class="col-md-2">
             <label>Item Label</label>
-            <input type="text" class="item_label form-control" placeholder="Item Label" value="{{item.item_label}}">
+            <input type="text" class="item_label form-control" placeholder="Item Label" readonly>
         </div>
         <div class="col-md-2">
             <label>Quantity</label>
-            <input type="number" class="item_quantity form-control" placeholder="Qty" value="1" min="1">
+            <input type="number" class="item_quantity form-control" placeholder="Qty" value="1" min="1" readonly>
         </div>
         <div class="col-md-4">
             <label>Dimensions (W x H)</label>
             <div class="d-flex align-items-center">
-                <input type="number" class="item_width form-control text-center" placeholder="Width" value="1" min="1">
+                <input type="number" class="item_width form-control text-center" placeholder="Width" value="1" min="1" readonly>
                 <span class="mx-2">X</span>
-                <input type="number" class="item_height form-control text-center" placeholder="Height" value="1" min="1">
+                <input type="number" class="item_height form-control text-center" placeholder="Height" value="1" min="1" readonly>
             </div>
         </div>
     </div>
@@ -192,11 +266,6 @@
         <div class="col-md-10">
             <button type="button" class="btn btn-outline-primary bom" data-modal-id="modal" data-loaded="false">
                 See Bill of Materials
-            </button>
-        </div>
-        <div class="col-md-2 text-end">
-            <button type="button" class="btn btn-outline-danger btn-sm btn-delete delete-quoteItem" data-row-id="quoteItem_row">
-                <i class="bi bi-trash"></i> Delete
             </button>
         </div>
     </div>
@@ -270,7 +339,41 @@
 </div>
 
 <div class="bom_modal_container">
-    
+    {% for item in quotation.items %}
+    <div class="modal fade" id="bom_modal{{forloop.counter}}" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="myModalLabel"><h4>BOM for <span id="modal_productName"></span></h4></h5>
+                    <button type="button" class="btn-close close-bom" data-bs-dismiss="modal" aria-label="Close" data-item-id="{{foorloop.counter}}"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-borderless table-hover align-middle" id="bomTable" cellpadding="5">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Finish</th>
+                                <th>Qty per Item</th>
+                                <th>Material Cost per Item</th>
+                                <th>Total Quantity</th>
+                                <th>Total Cost</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="download_excel_btn btn btn-success" data-filename="bill_of_materials">Download Excel</button>
+                    <button type="button" class="btn btn-secondary close-bom" data-bs-dismiss="modal" data-item-id="{{forloop.counter}}">Close</button>
+                    <button type="button" class="btn btn-primary save-bom" data-item-id="{{forloop.counter}}" data-exclude-material-ids="{{item.excluded_materials}}" data-additional-materials="{{item.item_materials}}">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 
 
@@ -285,12 +388,13 @@
     const quotation_labor = $('.quotation_labor')
     const total_bom = $('#total_bom')
     const project_input = $('.project')
+    const quotation_id = $('.quotation_id').val()
     const allMaterials = {{ materials|safe }};
     let latestBOMresponse = null;
     let savedBOMs = {};
     rowCounter_addItem = 0;
 
-    const allMats_selectElement = $('<select class="form-select additional_material_select"></select>');
+    const allMats_selectElement = $('<select class="form-select additional_material_select" disabled></select>');
         allMats_selectElement.append('<option value="" disabled selected>Select Material</option>');
     
         // Loop through and add each option
@@ -301,12 +405,12 @@
             allMats_selectElement.append(option);
         });
 
-
     $(document).ready(function () {
-        
-        
+        const addItem_button = $('#addItem');
+        const customer_select = $('#customer_select')
+
         const aluminum_finish_select = `
-            <select class="additional_finish_name form-select" name="type">
+            <select class="additional_finish_name form-select" name="type" disabled>
                 <option value="delete" hidden></option>
                 <option value="" disabled>Select Finish</option>
                 <option value="Mill-Finish" selected>Mill-Finish</option>
@@ -316,7 +420,7 @@
             </select>
         `;
         const glass_finish_select = `
-            <select class="additional_finish_name form-select" id="type" name="type">
+            <select class="additional_finish_name form-select" id="type" name="type" disabled>
                 <option value="delete" hidden></option>
                 <option value="" disabled>Select Finish</option>
                 <option value="Clear" selected>Clear</option>
@@ -324,14 +428,36 @@
                 <option value="Laminated">Laminated</option>
             </select>
         `;
+        $('.save-bom').each(function () {
+            const button = $(this);
+            const item_id = button.data('item-id');
+            const excluded_materials = button.data('exclude-material-ids') || '';
+            const additionalMaterialsRaw = button.data('additional-materials') || '[]';
+            const margin = quotation_margin.val()
+            const labor = quotation_labor.val()
+        
+            let additionalMaterials = [];
 
-
-
-
-        const addItem_button = $('#addItem');
-        const customer_select = $('#customer_select')
-
-
+            if (!item_id) return; 
+            console.log(additionalMaterialsRaw)
+            additionalMaterials = additionalMaterialsRaw.split('|').filter(Boolean).map(function (str) {
+                const parts = str.split('/');
+                return {
+                    material_id: parts[0],
+                    finish: parts[1],
+                    quantity: (parts[2])
+                };
+            });
+            
+            console.log(additionalMaterials)
+        
+            savedBOMs[item_id] = {
+                excluded_materials: excluded_materials,
+                product_margin: margin, 
+                labor_margin: labor,  
+                additionalMaterials: additionalMaterials
+            };
+        });
         $(document).on("change", ".supplier_default", function () {
             let supplierId = $(this).val();
             let default_prodSelect = $('#quoteItem_row_temp').find('.product_id')
@@ -366,11 +492,13 @@
                 });
             }
         });
-        $(document).on("change", ".supplier", function () {
+
+        $(".supplier:not(#supplier_template)").each(function () {
             let supplierId = $(this).val();  
             let productSelect = $(this).closest(".row").find(".product_id"); 
-            
-            console.log("Supplier changed:", supplierId);
+            let productId = $(this).data('product-id');  // product_id is stored on the .supplier element
+        
+            console.log("Supplier changed:", supplierId, "Selected product:", productId);
         
             if (supplierId) {
                 $.ajax({
@@ -380,12 +508,13 @@
                     dataType: "json",
                     success: function (response) {
                         productSelect.empty();  
-                        productSelect.append('<option value="" disabled selected>Select Product</option>');
+                        productSelect.append('<option value="" disabled>Select Product</option>');
                         productSelect.append('<option value="delete" hidden></option>');
         
                         if (response.products.length > 0) {
                             response.products.forEach(function (product) {
-                                productSelect.append(`<option value="${product.product_id}">${product.product_name}</option>`);
+                                const selectedAttr = (String(product.product_id) === String(productId)) ? "selected" : "";
+                                productSelect.append(`<option value="${product.product_id}" ${selectedAttr}>${product.product_name}</option>`);
                             });
                         } else {
                             productSelect.append('<option value="" disabled>No Products Available</option>');
@@ -396,89 +525,7 @@
                     }
                 });
             }
-        });
-        $(document).on('click', '.delete-quoteItem', function () {
-            let rowId = $(this).data('row-id');
-            let row = $('#' + rowId);
-
-            let idElement = row.find('.product_id');
-            
-            idElement.val('delete');
-            row.hide();
-            console.log("deleted row: " + row.attr('id'))
-            console.log(idElement.val())
-        });
-        $("#addItem").click(function() {
-            let button = $(this);
-            console.log("works")
-
-            rowCounter_addItem++;
-            let newRow = item_template.clone();
-            
-            newRow.attr('id', 'quoteItem_row' + rowCounter_addItem);
-            newRow.addClass("quoteItem_row");
-            
-            newRow.find('.delete-quoteItem').attr('data-row-id', 'quoteItem_row' + rowCounter_addItem);
-            newRow.find('.bom').attr('data-modal-id', 'bom_modal' + rowCounter_addItem).attr('id', 'bom' + rowCounter_addItem)
-
-            newRow.find(".product_id")
-            .append('<option value="delete" hidden></option>')
-            let selectedDefaultSupplier = item_template.find('.supplier').val();
-            newRow.find('.supplier').val(selectedDefaultSupplier).trigger('change');
-
-            let selectedAluminumFinish = default_aluminum_finish.val();
-            let selectedGlassFinish =   default_glass_finish.val();
-
-            newRow.find('.glass_finish').val(selectedGlassFinish).trigger('change');
-            newRow.find('.aluminum_finish').val(selectedAluminumFinish).trigger('change');
-
-            newRow.find('h6').text('Quotation Item #' + rowCounter_addItem);
-
-            newRow.show();
-            item_container.append(newRow);
-
-            let newModal = bom_modal_template.clone();
-            newModal.attr('id', 'bom_modal' + rowCounter_addItem)
-            newModal.find('.close-bom').each(function () {
-                $(this).data('item-id', rowCounter_addItem);
-            });
-            newModal.find('.save-bom').data('item-id', rowCounter_addItem)
-            bom_modal_container.append(newModal)
-            console.log("created row and modal: " + newRow.attr('id') + newModal.attr('id') + newRow.find('.bom').attr('data-modal-id'))
-        })
-        $(document).on('click', '.delete-bomItem', function () {
-            let rowId = $(this).data('row-id');
-            let row = $('#' + rowId);
-            let materialId = rowId.split("bomItem_row")[1];
-        
-            row.attr('id', 'delete');
-            row.hide();
-        
-            console.log("Deleted material ID:", materialId);
-        
-            let modal = $(this).closest('.modal');
-            let bom_button = modal.find('.save-bom');
-        
-            let idsRaw = bom_button.data('exclude-material-ids') || ''
-            let ids = idsRaw ? idsRaw.split('-') : [];
-            ids.push(materialId)
-        
-            let updatedIds = ids.join('-');
-        
-            bom_button.attr('data-exclude-material-ids', updatedIds);
-            bom_button.data('exclude-material-ids', updatedIds);
-        
-            console.log("Updated exclude-material-ids:", updatedIds, bom_button.data('exclude-material-ids'));
-        });
-
-        $(document).on('click', '.delete-bomItem-additional', function () {
-            let row = $(this).parent().parent();
-            console.log(row)
-            row.find('.additional_material_select').val('delete')
-            row.hide()
-        });
-        
-        
+        });        
         $(document).on('click', '.close-bom', function () {
             let itemId = $(this).data('item-id');
             let row = $('#quoteItem_row' + itemId);
@@ -531,174 +578,15 @@
             button.data('loaded', false)
             modal.modal('hide');
         });
-        $(document).on('change', '.bom-finish', function () {
-            let row = $(this).parent().parent().parent();
-            let button = row.find('.bom');
-    
-            button.data('loaded', false)
-        });
-        $(".submit-btn").click(function() {
-            let isValid = true;
-            let material_data = [];
-        
-            $(".form-control, .form-select").removeClass("is-invalid");
 
-            let customer_id = $(".customer").val();
-            let project = $(".project").val();
-
-            if (!customer_id) {
-                console.log("Product name is missing");
-                $(".customer").addClass("is-invalid");
-                isValid = false;
-            }
-            if (!project) {
-                console.log("Product category is missing");
-                $(".project").addClass("is-invalid");
-                isValid = false;
-            }
-            
-            item_container.find('.quoteItem_row').each(function () {
-                let item_row = $(this);
-                
-                let item_id = item_row.attr('id').replace("quoteItem_row", "")
-                let item_supplier = item_row.find(".supplier").val();
-                let product_id = item_row.find(".product_id").val();
-                let item_quantity = item_row.find(".item_quantity").val();
-                let item_width = item_row.find(".item_width").val();
-                let item_height = item_row.find(".item_height").val();
-                let glass_finish = item_row.find(".glass_finish").val();
-                let aluminum_finish = item_row.find(".aluminum_finish").val();
-                let item_label = item_row.find(".item_label").val();
-                
-                if (product_id === 'delete' || product_id === null) {
-                    return; 
-                }
-                
-                let excluded_materials;
-                let additional_materials;
-    
-                if (savedBOMs[item_id]) {
-                    let rawExcluded = savedBOMs[item_id].excluded_materials;
-                    excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
-                    
-                    additional_materials = JSON.stringify(savedBOMs[item_id].additionalMaterials);
-                } else {
-                    excluded_materials = [];
-                    additional_materials=[];
-
-                }
-                let submit_margin = quotation_margin.val();
-                let submit_labor = quotation_labor.val();
-                
-                if (!item_quantity) {
-                    item_row.find(".item_quantity").addClass("is-invalid");
-                    isValid = false;
-                }
-                if (!item_height) {
-                    item_row.find(".item_height").addClass("is-invalid");
-                    isValid = false;
-                }
-                if (!item_width) {
-                    item_row.find(".item_width").addClass("is-invalid");
-                    isValid = false;
-                }
-                if (!product_id) {
-                    item_row.find(".product_id").addClass("is-invalid");
-                    isValid = false;
-                }
-
-                material_data.push({
-                    'item_id': item_id,
-                    'product_id': product_id,
-                    'item_supplier': item_supplier,
-                    'item_quantity': item_quantity,
-                    'item_width': item_width,
-                    'item_height': item_height,
-                    'glass_finish': glass_finish,
-                    'aluminum_finish': aluminum_finish,
-                    'excluded_materials': excluded_materials,
-                    'submit_margin': submit_margin,
-                    'submit_labor':submit_labor,
-                    'item_label':item_label,
-                    'additional_materials': additional_materials,
-                });
-                
-            });
-            if (!isValid) {
-                alert("Please fill in all required fields.");
-                return;
-            }
-
-            // Prepare Data
-            let submit_data = {
-                'customer_id': customer_id,
-                'project': project,
-                'item_data': JSON.stringify(material_data),
-                "csrfmiddlewaretoken": $("[name=csrfmiddlewaretoken]").val(),
-            };
-        
-            console.log(submit_data);
-            // Submit Data via AJAX
-            $.ajax({
-                method: "post",
-                data: submit_data,
-                success: function(data) {
-                    console.log(data["status"]);
-                    console.log(data);
-                    if (data["status"]) {
-                        window.location = data["url"];
-                    } else {
-                        alert(data["error"]);
-                    }
-                },
-                error: function(xhr, textStatus, errorThrown) {
-                    alert("Something broke");
-                }
-            });
-        });
-        customer_select.select2({
-            theme: 'bootstrap-5',
-            placeholder: "Select Customer",
-            allowClear: true,
-        });
-
-        
-        customer_select.on('change', function() {
-            let customerId = $(this).val();
-            
-            if (customerId) {
-                $.ajax({
-                    url: '/get_customer',  
-                    type: 'GET',
-                    data: { customer_id: customerId },
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response) {
-                            $('.customer_address').val(response.address);
-                            $('.customer_mobile').val(response.mobile);
-                            $('.customer_email').val(response.email);
-                        } else {
-                            clearCustomerFields();
-                        }
-                    },
-                    error: function() {
-                        alert('Failed to fetch customer details.');
-                        clearCustomerFields();
-                    }
-                });
-            } else {
-                $('.customer_address').val('');
-                $('.customer_mobile').val('');
-                $('.customer_email').val('');
-            }
-        });
 
 
         total_bom.click(function() {
-            let item_container = $('.item_container');  
+            let item_container = $('.item_container');  // Your container for the quote items
             let submit_data = [];
             let isValid = true;
             $(".form-control, .form-select").removeClass("is-invalid");
+            // Iterate over each quoteItem_row in the container
             item_container.find('.quoteItem_row').each(function () {
                 let item_row = $(this);
                 
@@ -710,7 +598,7 @@
                 let item_height = item_row.find(".item_height").val();
                 let glass_finish = item_row.find(".glass_finish").val();
                 let aluminum_finish = item_row.find(".aluminum_finish").val();
-    
+                
                 let excluded_materials;
                 let additional_materials;
 
@@ -723,7 +611,6 @@
                     excluded_materials = [];
                     additional_materials = [];
                 }
-                
                 let submit_margin = quotation_margin.val();
                 let submit_labor = quotation_labor.val();
                 
@@ -779,11 +666,14 @@
                     console.log(response);
                     latestBOMresponse = response;
         
+                    // Handle the modal display
                     let bom_modal = $('#total_bom_modal');
                     let bom_modal_tbody = bom_modal.find('tbody');
         
+                    // Clear the current table data
                     bom_modal_tbody.empty();
         
+                    // Iterate through the BOM response and add rows to the modal
                     const mainSeparatorRow = `
                         <tr class="table-secondary">
                             <td colspan="7" class="fw-bold text-center">Main Materials</td>
@@ -918,7 +808,26 @@
 
             XLSX.writeFile(workbook, "total_bom.xlsx");
         });
+        $(document).on("change", ".additional_material_select", function () {
+
+
+            const materialType = $(this).find('option:selected').data('material-type');
+            let finishSelectHTML = '';
+            
+            if (materialType === 'aluminum') {
+                finishSelectHTML = aluminum_finish_select;
+            } else if (materialType === 'glass') {
+                finishSelectHTML = glass_finish_select; 
+            } else {
+                finishSelectHTML = ''; 
+            }
+            
+            // Insert the corresponding finish select into the next td
+            $(this).closest('tr').find('td:eq(1)').html(finishSelectHTML);
+        });
         $(document).on("click", ".additional-material", function () {
+
+
             const newRow = `
                 <tr class="additional-material-row">
                     <td>
@@ -939,23 +848,11 @@
             const $row = $(newRow);
             $(this).closest('tr').before($row);
         });
-        $(document).on("change", ".additional_material_select", function () {
-
-
-            const materialType = $(this).find('option:selected').data('material-type');
-            let finishSelectHTML = '';
-            
-            // Determine the appropriate finishes based on material type
-            if (materialType === 'aluminum') {
-                finishSelectHTML = aluminum_finish_select; // predefined variable
-            } else if (materialType === 'glass') {
-                finishSelectHTML = glass_finish_select; // predefined variable
-            } else {
-                finishSelectHTML = ''; // no finishes if the type is not aluminum or glass
-            }
-            
-            // Insert the corresponding finish select into the next td
-            $(this).closest('tr').find('td:eq(1)').html(finishSelectHTML);
+        $(document).on('click', '.delete-bomItem-additional', function () {
+            let row = $(this).parent().parent();
+            console.log(row)
+            row.find('.additional_material_select').val('delete')
+            row.hide()
         });
     });
     $(document).on("click", ".bom", function () {
@@ -964,12 +861,14 @@
         let alreadyLoaded = button.data('loaded');
         let bom_modal = $('#' + modal_id)
         
+        console.log(bom_modal)
         if (alreadyLoaded) {
             console.log("already loaded")
             bom_modal.modal('show');
             return;
         }
         let item_id = modal_id.replace("bom_modal", "")
+
 
         let excluded_materials;
         let additional_materials;
@@ -983,8 +882,6 @@
             excluded_materials = [];
             additional_materials = [];
         }
-
-        console.log(additional_materials)
 
         let submit_margin = quotation_margin.val();
         let submit_labor = quotation_labor.val();
@@ -1055,7 +952,7 @@
 
                 bom_modal_productLabel.text(response.product);
                 bom_modal_tbody.empty();
-
+    
                 const mainSeparatorRow = `
                     <tr class="table-secondary">
                         <td colspan="7" class="fw-bold text-center">Main Materials</td>
@@ -1116,7 +1013,7 @@
                 
                     bom_modal_tbody.append(row);
                 });
-                    
+ 
                 bom_modal_tbody.append(`
                     <tr>
                         <td><button type="button" class="additional-material btn btn-primary" data-item-id="${response.item_id}" data-additional-materials="">Add Material</button></td>

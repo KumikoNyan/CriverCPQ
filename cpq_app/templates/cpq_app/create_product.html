@@ -263,6 +263,15 @@
         addMaterial_button.on('click', function () {
             let button = $(this);
             console.log("works")
+
+            supplier_dropdown.removeClass('is-invalid');
+            
+            if (!supplier_dropdown.val()) {
+                supplier_dropdown.addClass('is-invalid');
+                alert("Please fill in all required fields.");
+                return; 
+            }
+
             addMaterial();
         });
         addSupplier_button.on('click', function () {
@@ -380,6 +389,7 @@
                 let material_quantity = row.find(".material_quantity").val()
                 let material_scale = row.find(".material_scale").val()
                 let scale_ratio = row.find(".scale_ratio").val()
+                let scale_ratio_second = row.find(".scale_ratio_second").val()
 
                 console.log(material_id)
 
@@ -407,6 +417,7 @@
                         'material_quantity': material_quantity,
                         'material_scale': material_scale,
                         'scale_ratio': scale_ratio,
+                        'scale_ratio_second': scale_ratio_second
                     });
                 }
             });
@@ -454,6 +465,28 @@
         let supplier_id = supplier_dropdown.val();
 
         materialId_update(supplier_id, material_type, row_id);
+
+        let scaleCol = row.find(".material_scale").parent(); 
+        let scaleCol_second = row.find(".scale_ratio").parent();
+        if (material_type === "glass") {
+            scaleCol.html(`
+                <input type="number" class="scale_ratio_second material_scale form-control" placeholder="(H) Scale Ratio">
+            `);
+            scaleCol_second.html(`
+                <input type="number" class="scale_ratio form-control" placeholder="(W) Scale Ratio">
+            `)
+        } else {
+            scaleCol.html(`
+                <select class="material_scale form-select">
+                    <option value="by_none">None</option>
+                    <option value="by_height">Height</option>
+                    <option value="by_width">Width</option>
+                </select>
+            `);
+            scaleCol_second.html(`
+                <input type="number" class="scale_ratio form-control" placeholder="Scale Ratio">
+            `)
+        }
     });
 </script>
 {% endblock %}

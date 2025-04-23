@@ -1,5 +1,6 @@
 from django.db import models
 from collections import defaultdict
+import uuid
 
 # Models
 class Customer(models.Model):
@@ -74,10 +75,10 @@ class ProductMaterial(models.Model):
     
 class Quotation(models.Model):
     quotation_id = models.AutoField(primary_key=True)
+    quotation_group_id = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     project = models.CharField(max_length=50)
     date_created = models.DateTimeField(auto_now_add=True)
-    quotation_status = models.CharField(max_length=50)
     version_number = models.IntegerField()
     is_active_version = models.BooleanField(default=True)
 
@@ -98,7 +99,6 @@ class QuotationItem(models.Model):
     glass_finish = models.CharField(max_length=50, null=True)
     aluminum_finish = models.CharField(max_length=50, null=True)
     excluded_materials = models.CharField(max_length=50, null=True)
-    additional_materials = models.CharField(max_length=50, null=True)
 
     def __str__(self):
         return f"Item {self.item_id} in Quotation {self.quotation.quotation_id}"
@@ -113,7 +113,7 @@ class QuotationItem(models.Model):
         aluminum_finish = self.aluminum_finish or ""
 
         # Parse excluded materials list from string if it's stored as CSV
-        excluded_materials = self.excluded_materials.split(',') if self.excluded_materials else []
+        excluded_materials = self.excluded_materials.split('-') if self.excluded_materials else []
 
         materials = ProductMaterial.objects.filter(product=self.product)
         per_item_cost = 0.0
@@ -145,6 +145,31 @@ class QuotationItem(models.Model):
             single_item_cost = single_item_qty * unit_cost
 
             per_item_cost += single_item_cost
+        item_materials = ItemMaterial.objects.filter(item=self)
+        for im in item_materials:
+            material = im.material
+            finish = im.finish
+            quantity = im.quantity
+
+            unit_cost = 0.0
+            if material.material_type == "accessory":
+                unit_cost = float(material.material_cost)
+            elif material.material_type == "glass":
+                finish_obj = MaterialFinish.objects.get(finish_name=finish, material=material)
+                unit_cost = float(finish_obj.finish_cost)
+            else:
+                finish_obj = MaterialFinish.objects.get(finish_name=finish, material=material)
+                unit_cost = float(finish_obj.finish_cost)
+
+            single_item_cost = quantity * unit_cost
+            per_item_cost += single_item_cost
 
         unit_price = per_item_cost * (1 + (labor_margin + product_margin) / 100)
         return round(unit_price, 2)
+
+class ItemMaterial(models.Model):
+    item_material_id = models.AutoField(primary_key=True)
+    item = models.ForeignKey(QuotationItem, on_delete=models.CASCADE)
+    material = models.ForeignKey(Material, on_delete=models.CASCADE)
+    finish = models.CharField(max_length=50, null=True)
+    quantity = models.FloatField()

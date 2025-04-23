@@ -382,7 +382,7 @@
                 <div class="modal-footer">
                     <button type="button" class="download_excel_btn btn btn-success" data-filename="bill_of_materials">Download Excel</button>
                     <button type="button" class="btn btn-secondary close-bom" data-bs-dismiss="modal" data-item-id="{{forloop.counter}}">Close</button>
-                    <button type="button" class="btn btn-primary save-bom" data-item-id="{{forloop.counter}}" data-exclude-material-ids="{{item.excluded_materials}}">Save changes</button>
+                    <button type="button" class="btn btn-primary save-bom" data-item-id="{{forloop.counter}}" data-exclude-material-ids="{{item.excluded_materials}}" data-additional-materials="{{item.item_materials}}">Save changes</button>
                 </div>
             </div>
         </div>
@@ -403,14 +403,75 @@
     const total_bom = $('#total_bom')
     const project_input = $('.project')
     const quotation_id = $('.quotation_id').val()
+    const allMaterials = {{ materials|safe }};
     let latestBOMresponse = null;
     let savedBOMs = {};
     rowCounter_addItem = 0;
 
+    const allMats_selectElement = $('<select class="form-select additional_material_select"></select>');
+        allMats_selectElement.append('<option value="" disabled selected>Select Material</option>');
+    
+        // Loop through and add each option
+        allMaterials.forEach(material => {
+            const option = `<option value="${material.material_id}" data-material-type="${material.material_type}">
+                                ${material.material_supplier}: ${material.material_name}
+                            </option>`;
+            allMats_selectElement.append(option);
+        });
+
     $(document).ready(function () {
         const addItem_button = $('#addItem');
         const customer_select = $('#customer_select')
+
+        const aluminum_finish_select = `
+            <select class="additional_finish_name form-select" name="type">
+                <option value="delete" hidden></option>
+                <option value="" disabled>Select Finish</option>
+                <option value="Mill-Finish" selected>Mill-Finish</option>
+                <option value="Anodized">Anodized</option>
+                <option value="Analok">Analok</option>
+                <option value="Powdercoated">Powdercoated</option>
+            </select>
+        `;
+        const glass_finish_select = `
+            <select class="additional_finish_name form-select" id="type" name="type">
+                <option value="delete" hidden></option>
+                <option value="" disabled>Select Finish</option>
+                <option value="Clear" selected>Clear</option>
+                <option value="Tempered">Tempered</option>
+                <option value="Laminated">Laminated</option>
+            </select>
+        `;
+        $('.save-bom').each(function () {
+            const button = $(this);
+            const item_id = button.data('item-id');
+            const excluded_materials = button.data('exclude-material-ids') || '';
+            const additionalMaterialsRaw = button.data('additional-materials') || '[]';
+            const margin = quotation_margin.val()
+            const labor = quotation_labor.val()
         
+            let additionalMaterials = [];
+
+            if (!item_id) return; 
+            console.log(additionalMaterialsRaw)
+            additionalMaterials = additionalMaterialsRaw.split('|').filter(Boolean).map(function (str) {
+                const parts = str.split('/');
+                return {
+                    material_id: parts[0],
+                    finish: parts[1],
+                    quantity: (parts[2])
+                };
+            });
+            
+            console.log(additionalMaterials)
+        
+            savedBOMs[item_id] = {
+                excluded_materials: excluded_materials,
+                product_margin: margin, 
+                labor_margin: labor,  
+                additionalMaterials: additionalMaterials
+            };
+        });
         $(document).on("change", ".supplier_default", function () {
             let supplierId = $(this).val();
             let default_prodSelect = $('#quoteItem_row_temp').find('.product_id')
@@ -605,14 +666,32 @@
         
 
             let excluded_materials = $(this).data('exclude-material-ids')
-            let product_margin = modal.find(".bom_product_margin").val()
-            let labor_margin = modal.find(".bom_labor_margin").val()
+            let product_margin = quotation_margin.val()
+            let labor_margin = quotation_labor.val()
+
+            let additionalMaterials = [];
+            
+            modal.find("tr.additional-material-row").each(function () {
+                console.log(this)
+                let qty = $(this).find(".additional_material_qty").val();
+                let material_id = $(this).find(".additional_material_select").val();
+                let finish = $(this).find(".additional_finish_name").val() || "";
+
+                if (material_id && qty && material_id !== 'delete') {
+                    additionalMaterials.push({
+                        material_id: material_id,
+                        quantity: qty,
+                        finish: finish  
+                    });
+                }
+            });
         
-            // Save it
+            
             savedBOMs[item_id] = {
                 excluded_materials,
                 product_margin,
-                labor_margin
+                labor_margin,
+                additionalMaterials
             };
             button.data('loaded', false)
             modal.modal('hide');
@@ -661,13 +740,17 @@
                 }
                 console.log(product_id)
 
-                let excluded_materials = [];
+                let excluded_materials;
+                let additional_materials;
     
                 if (savedBOMs[item_id]) {
                     let rawExcluded = savedBOMs[item_id].excluded_materials;
                     excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
+                    
+                    additional_materials = JSON.stringify(savedBOMs[item_id].additionalMaterials);
                 } else {
                     excluded_materials = [];
+                    additional_materials=[];
 
                 }
                 let submit_margin = quotation_margin.val();
@@ -703,6 +786,7 @@
                     'submit_margin': submit_margin,
                     'submit_labor':submit_labor,
                     'item_label': item_label,
+                    'additional_materials': additional_materials,
                 });
                 
             });
@@ -795,15 +879,17 @@
                 let glass_finish = item_row.find(".glass_finish").val();
                 let aluminum_finish = item_row.find(".aluminum_finish").val();
                 
-                let excluded_materials = [];
-                
-    
+                let excluded_materials;
+                let additional_materials;
+
                 if (savedBOMs[item_id]) {
                     let rawExcluded = savedBOMs[item_id].excluded_materials;
                     excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
+
+                    additional_materials = JSON.stringify(savedBOMs[item_id].additionalMaterials)
                 } else {
                     excluded_materials = [];
-
+                    additional_materials = [];
                 }
                 let submit_margin = quotation_margin.val();
                 let submit_labor = quotation_labor.val();
@@ -837,6 +923,7 @@
                     'excluded_materials': excluded_materials,
                     'submit_margin': submit_margin,
                     'submit_labor':submit_labor,
+                    'additional_materials': additional_materials,
                 });
                 
             });
@@ -867,6 +954,12 @@
                     bom_modal_tbody.empty();
         
                     // Iterate through the BOM response and add rows to the modal
+                    const mainSeparatorRow = `
+                        <tr class="table-secondary">
+                            <td colspan="7" class="fw-bold text-center">Main Materials</td>
+                        </tr>
+                    `;
+                    bom_modal_tbody.append(mainSeparatorRow);
                     response.bom.forEach(material => {
                         let row = `
                             <tr id="bomItem_row${material.material_id}">
@@ -875,6 +968,34 @@
                                 <td>${material.material_unit_total_quantity}${material.material_unit}</td>
                                 <td>${material.material_total_cost}</td>
                             </tr>`;
+                        bom_modal_tbody.append(row);
+                    });
+                    if (response.additional_bom.length > 0) {
+                        const separatorRow = `
+                            <tr class="table-secondary">
+                                <td colspan="7" class="text-center fw-bold">Additional Materials</td>
+                            </tr>
+                        `;
+                        bom_modal_tbody.append(separatorRow);
+                    }
+                    
+                    response.additional_bom.forEach(material => {
+    
+                        let row = `
+                            <tr class="additional-material-row" id="additional_bomItem_row${material.material_id}">
+                                <td>
+                                    ${material.material_name}
+                                    <input type="hidden" class="additional_material_select" value="${material.material_id}">
+                                </td>
+                                <td>
+                                    ${material.finish_name}
+                                    <input type="hidden" class="additional_finish_name" value="${material.finish_name}">
+                                </td>
+                                <td>${material.total_quantity}${material.material_unit}</td>
+                                <td>${material.total_cost}</td>
+                            </tr>
+                        `;
+                    
                         bom_modal_tbody.append(row);
                     });
         
@@ -943,6 +1064,16 @@
                     material.material_total_cost
                 ]);
             });
+            excelData.push([]); 
+            response.additional_bom.forEach(material => {
+                excelData.push([
+                    material.material_name,
+                    material.finish_name,
+                    material.total_quantity,
+                    material.material_unit,
+                    material.total_cost
+                ]);
+            });
 
             // Add summary
             excelData.push([]);
@@ -956,6 +1087,52 @@
             XLSX.utils.book_append_sheet(workbook, worksheet, "BOM");
 
             XLSX.writeFile(workbook, "total_bom.xlsx");
+        });
+        $(document).on("change", ".additional_material_select", function () {
+
+
+            const materialType = $(this).find('option:selected').data('material-type');
+            let finishSelectHTML = '';
+            
+            if (materialType === 'aluminum') {
+                finishSelectHTML = aluminum_finish_select;
+            } else if (materialType === 'glass') {
+                finishSelectHTML = glass_finish_select; 
+            } else {
+                finishSelectHTML = ''; 
+            }
+            
+            // Insert the corresponding finish select into the next td
+            $(this).closest('tr').find('td:eq(1)').html(finishSelectHTML);
+        });
+        $(document).on("click", ".additional-material", function () {
+
+
+            const newRow = `
+                <tr class="additional-material-row">
+                    <td>
+                        ${allMats_selectElement.prop('outerHTML')}
+                    </td>
+                    <td></td>
+                    <td>
+                        <input type="number" class="form-control additional_material_qty" style="width:50%;" placeholder="Qty">
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <button type="button" class="btn btn-close btn-delete delete-bomItem"></button>
+                    </td>
+                </tr>
+            `;
+            const $row = $(newRow);
+            $(this).closest('tr').before($row);
+        });
+        $(document).on('click', '.delete-bomItem-additional', function () {
+            let row = $(this).parent().parent();
+            console.log(row)
+            row.find('.additional_material_select').val('delete')
+            row.hide()
         });
     });
     $(document).on("click", ".bom", function () {
@@ -972,13 +1149,18 @@
         }
         let item_id = modal_id.replace("bom_modal", "")
 
-        let excluded_materials = [];
+
+        let excluded_materials;
+        let additional_materials;
 
         if (savedBOMs[item_id]) {
             let rawExcluded = savedBOMs[item_id].excluded_materials;
             excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
+
+            additional_materials = JSON.stringify(savedBOMs[item_id].additionalMaterials)
         } else {
             excluded_materials = [];
+            additional_materials = [];
         }
 
         let submit_margin = quotation_margin.val();
@@ -1031,6 +1213,7 @@
             'excluded_materials': excluded_materials,
             'quotation_margin': submit_margin,
             'quotation_labor': submit_labor,
+            'additional_materials': additional_materials,
             'item_id': item_id,
             'csrfmiddlewaretoken': $("[name=csrfmiddlewaretoken]").val(),
         };
@@ -1050,6 +1233,13 @@
                 bom_modal_productLabel.text(response.product);
                 bom_modal_tbody.empty();
     
+                const mainSeparatorRow = `
+                    <tr class="table-secondary">
+                        <td colspan="7" class="fw-bold text-center">Main Materials</td>
+                    </tr>
+                `;
+                bom_modal_tbody.append(mainSeparatorRow);
+                    
                 response.bom.forEach(material => {
                     let row = `
                         <tr id="${response.item_id}bomItem_row${material.material_id}">
@@ -1066,8 +1256,53 @@
 
                     bom_modal_tbody.append(row);
                 });
+
+                if (response.additional_bom.length > 0) {
+                    const separatorRow = `
+                        <tr class="table-secondary">
+                            <td colspan="7" class="text-center fw-bold">Additional Materials</td>
+                        </tr>
+                    `;
+                    bom_modal_tbody.append(separatorRow);
+                }
+                
+                response.additional_bom.forEach(material => {
+
+                    let row = `
+                        <tr class="additional-material-row" id="${response.item_id}additional_bomItem_row${material.material_id}">
+                            <td>
+                                ${material.material_name}
+                                <input type="hidden" class="additional_material_select" value="${material.material_id}">
+                            </td>
+                            <td>
+                                ${material.finish_name}
+                                <input type="hidden" class="additional_finish_name" value="${material.finish_name}">
+                            </td>
+                            <td>
+                                ${material.quantity}${material.material_unit}
+                                <input type="hidden" class="additional_material_qty" value="${material.quantity}">
+                            </td>
+                            <td>${material.cost}</td>
+                            <td>${material.total_quantity}${material.material_unit}</td>
+                            <td>${material.total_cost}</td>
+                            <td>
+                                <button type="button" class="btn btn-close btn-delete delete-bomItem-additional" data-row-id="${response.item_id}additional_bomItem_row${material.material_id}"></button>
+                            </td>
+                        </tr>
+                    `;
+                
+                    bom_modal_tbody.append(row);
+                });
  
                 bom_modal_tbody.append(`
+                    <tr>
+                        <td><button type="button" class="additional-material btn btn-primary" data-item-id="${response.item_id}" data-additional-materials="">Add Material</button></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
                     <tr><td colspan="5"></td></tr>
                     <tr><td colspan="5"></td></tr>
                     <tr><td colspan="5"></td></tr>
