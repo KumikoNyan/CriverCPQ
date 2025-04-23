@@ -247,17 +247,28 @@
     const supplier_dropdown = $('#supplier')
     const default_material_type = "aluminum"
     function materialId_update(supplier_id, material_type, row_id) {
-        let dropdown_template = $('#material_id' + supplier_id+ '_' + material_type);
-
-        let cloned_dropdown = dropdown_template.clone(); 
-        cloned_dropdown.removeAttr('id'); 
+        let dropdown_template = $('#material_id' + supplier_id + '_' + material_type);
+        let cloned_dropdown = dropdown_template.clone();
+        cloned_dropdown.removeAttr('id');
         cloned_dropdown.addClass('material_id');
-        cloned_dropdown.show(); 
-        
-        console.log(cloned_dropdown)
+        cloned_dropdown.show();
+    
         let target_row = $('#' + row_id);
-        target_row.find('.material_id').replaceWith(cloned_dropdown);
-        
+        let old_dropdown = target_row.find('.material_id');
+    
+        if ($.fn.select2 && old_dropdown.hasClass('select2-hidden-accessible')) {
+            old_dropdown.select2('destroy');
+        }
+    
+        old_dropdown.after(cloned_dropdown);
+        old_dropdown.remove();
+    
+        if ($.fn.select2) {
+            cloned_dropdown.select2({
+                placeholder: 'Select Material',
+                theme: 'bootstrap-5'
+            });
+        }
     }
     $(document).ready(function () {
         const material_container = $('.material_container');

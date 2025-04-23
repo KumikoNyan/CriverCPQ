@@ -1090,6 +1090,9 @@ def get_bill_of_materials(request):
     additional_bom = []
     for mat in additional_materials:
         material_id = mat['material_id']
+
+        if not material_id or material_id == '[]': 
+                continue
         quantity = float(mat['quantity'])
         finish_name = mat['finish']
 
@@ -1274,8 +1277,12 @@ def get_total_bom(request):
         additional_materials_raw = item['additional_materials']
         additional_materials = json.loads(additional_materials_raw) if additional_materials_raw else []
 
+        print(additional_materials)
         for mat in additional_materials:
             material_id = mat['material_id']
+            print(material_id)
+            if not material_id or material_id == '[]': 
+                continue
             quantity = float(mat['quantity'])
             finish_name = mat['finish']
 
@@ -1532,3 +1539,35 @@ def feedback(request):
         return redirect('login')
 
     return render(request, 'cpq_app/feedback.html')
+
+def copy_aluminum_materials(new_supplier_id, finish_cost_increase):
+    # Get the new supplier instance
+    new_supplier = Supplier.objects.get(id=new_supplier_id)
+
+    # Get all aluminum materials
+    aluminum_materials = Material.objects.filter(material_type='aluminum')
+
+    for material in aluminum_materials:
+        # Create a copy of the aluminum material with a new supplier
+        new_material = Material(
+            material_name=material.material_name,
+            material_type=material.material_type,
+            material_unit=material.material_unit,
+            material_cost=material.material_cost,
+            supplier=new_supplier
+        )
+        new_material.save()
+
+        # Get the material finishes for the original material
+        material_finishes = MaterialFinish.objects.filter(material=material)
+
+        for finish in material_finishes:
+            # Create a copy of the material finish with an updated finish cost
+            new_finish = MaterialFinish(
+                finish_name=finish.finish_name,
+                finish_cost=finish.finish_cost + Decimal(finish_cost_increase),
+                material=new_material
+            )
+            new_finish.save()
+
+    print("Aluminum materials and associated finishes copied successfully!")
