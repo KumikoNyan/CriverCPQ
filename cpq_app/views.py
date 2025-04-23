@@ -1540,12 +1540,16 @@ def feedback(request):
 
     return render(request, 'cpq_app/feedback.html')
 
+
+#DELETE THIS LATER!
+'''
 def copy_aluminum_materials(new_supplier_id, finish_cost_increase):
     # Get the new supplier instance
-    new_supplier = Supplier.objects.get(id=new_supplier_id)
+    new_supplier = Supplier.objects.get(supplier_id=new_supplier_id)
+    roosevelt = Supplier.objects.get(supplier_id=13)
 
     # Get all aluminum materials
-    aluminum_materials = Material.objects.filter(material_type='aluminum')
+    aluminum_materials = Material.objects.filter(material_type='aluminum', supplier=roosevelt)
 
     for material in aluminum_materials:
         # Create a copy of the aluminum material with a new supplier
@@ -1553,7 +1557,6 @@ def copy_aluminum_materials(new_supplier_id, finish_cost_increase):
             material_name=material.material_name,
             material_type=material.material_type,
             material_unit=material.material_unit,
-            material_cost=material.material_cost,
             supplier=new_supplier
         )
         new_material.save()
@@ -1565,9 +1568,10 @@ def copy_aluminum_materials(new_supplier_id, finish_cost_increase):
             # Create a copy of the material finish with an updated finish cost
             new_finish = MaterialFinish(
                 finish_name=finish.finish_name,
-                finish_cost=finish.finish_cost + Decimal(finish_cost_increase),
+                finish_cost=float(finish.finish_cost) * finish_cost_increase,
                 material=new_material
             )
             new_finish.save()
 
     print("Aluminum materials and associated finishes copied successfully!")
+'''
