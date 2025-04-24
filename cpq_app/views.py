@@ -62,6 +62,9 @@ def create_account(request):
         account_level = request.POST.get("account_level")
         is_superuser = (account_level == "superuser")
 
+        if Account.objects.filter(account_name=username).exists():
+            return render(request, 'cpq_app/create_account.html', {'error': 'Username already exists.'})
+
         # hashed password for security reasons
         hashed_password = make_password(password)
 
