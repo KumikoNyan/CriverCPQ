@@ -413,7 +413,7 @@
                     row.find(".material_id").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!material_quantity) {
+                if (isNaN(material_quantity) || !material_quantity || material_quantity < 0) {
                     row.find(".material_quantity").addClass("is-invalid");
                     isValid = false;
                 }

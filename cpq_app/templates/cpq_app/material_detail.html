@@ -91,7 +91,7 @@
         <div class="row pt-3">
             <div class="col">
                 <label for="cost">Cost</label>
-                <input type="number" class="material_cost form-control" id="cost" name="cost" value="{{material_object.material_cost}}" step="0.01">
+                <input type="number" class="material_cost form-control" id="cost" name="cost" value="{{material_object.material_cost}}" step="0.01" readonly>
             </div>
             <div class="col">
                 <label for="unit">Unit</label>
@@ -142,7 +142,7 @@
                         <option value="Mill-Finish"{% if finish.finish_name == 'Mill-Finish' %}selected{%endif%}>Mill-Finish</option>
                         <option value="Anodized"{% if finish.finish_name == 'Anodized' %}selected{%endif%}>Anodized</option>
                         <option value="Analok"{% if finish.finish_name == 'Analok' %}selected{%endif%}>Analok</option>
-                        <option value="Powdercoatedd"{% if finish.finish_name == 'Powdercoatedd' %}selected{%endif%}>Powdercoated</option>
+                        <option value="Powdercoated"{% if finish.finish_name == 'Powdercoated' %}selected{%endif%}>Powdercoated</option>
                     </select>
                 </div>
                 <div class="col">
@@ -224,7 +224,7 @@
             <option value="Mill-Finish" selected>Mill-Finish</option>
             <option value="Anodized">Anodized</option>
             <option value="Analok">Analok</option>
-            <option value="Powdercoatedd">Powdercoated</option>
+            <option value="Powdercoated">Powdercoated</option>
         </select>
     </div>
     <div class="col">
@@ -430,7 +430,7 @@
                     row.find(".finish_name").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!finish_cost) {
+                if (!finish_cost || isNaN(finish_cost) || finish_cost < 0) {
                     row.find(".finish_cost").addClass("is-invalid");
                     isValid = false;
                 }
@@ -531,9 +531,11 @@
             
             addFinish_button.data("material-type", material_type)
             if (material_type !== "accessory") {
-                addFinish_button.trigger("click");
+                addFinish(material_type);
+                $('.material_cost').prop('readonly', true);  // Make it readonly
+            } else {
+                $('.material_cost').prop('readonly', false); // Make it editable
             }
-            console.log(addFinish_button.data('material-type'))
 
             if (unit_mapping[material_type]) {
                 let unit = unit_mapping[material_type];

@@ -82,7 +82,7 @@
                     <td>{{product.product_name}}</td>
                     <td>{{product.product_category|capfirst}}</td>
                     <td>cost</td>
-                    <td><button type="button" class="submit-delete btn btn-primary" data-product-id="{{product.product_id}}">Delete</button>
+                    <td><button type="button" class="submit-delete btn btn-danger" data-product-id="{{product.product_id}}">Delete</button>
                         <a href="{% url 'product_detail' product_id=product.product_id %}" class="btn btn-primary">Edit</a>
                     </td>
                 </tr>

@@ -282,7 +282,7 @@ def quotation_detail(request, quotation_id):
                 item_label=item['item_label']
             )
 
-            additional_materials = json.loads(item['additional_materials'])
+            additional_materials = item['additional_materials']
             if additional_materials:
                 for material in additional_materials:
                     material_obj = Material.objects.get(material_id=material['material_id'])
@@ -409,7 +409,7 @@ def create_quotation(request):
                 item_label=item['item_label'],
             )
 
-            additional_materials = json.loads(item['additional_materials'])
+            additional_materials = item['additional_materials']
             if additional_materials:
                 for material in additional_materials:
                     material_obj = Material.objects.get(material_id=material['material_id'])
@@ -1005,12 +1005,14 @@ def get_bill_of_materials(request):
             unit_cost = float(mat.material_cost)
         elif mat.material_type == "glass":
             finish_name = glass_finish
+            print(finish_name, mat.material_name)
             finish_obj = MaterialFinish.objects.get(finish_name=finish_name, material=mat)
             unit_cost = float(finish_obj.finish_cost)
             finish = finish_name
             single_unit = (height*float(m.scale_ratio_second))*(width*float(m.scale_ratio))
         else:
             finish_name = aluminum_finish
+            print(finish_name, mat.material_name)
             finish_obj = MaterialFinish.objects.get(finish_name=finish_name, material=mat)
             unit_cost = float(finish_obj.finish_cost)
             finish = finish_name
@@ -1278,7 +1280,7 @@ def get_total_bom(request):
         ], key=lambda x: x["material_name"])
         
         additional_materials_raw = item['additional_materials']
-        additional_materials = json.loads(additional_materials_raw) if additional_materials_raw else []
+        additional_materials = additional_materials_raw if additional_materials_raw else []
 
         print(additional_materials)
         for mat in additional_materials:

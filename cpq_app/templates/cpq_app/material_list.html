@@ -82,7 +82,7 @@
                     <td>{{material.material_name}}</td>
                     <td>{{material.material_type|capfirst}}</td>
                     <td>{{material.material_cost}}</td>
-                    <td><button type="button" class="submit-delete btn btn-primary" data-material-id="{{material.material_id}}">Delete</button>
+                    <td><button type="button" class="submit-delete btn btn-danger" data-material-id="{{material.material_id}}">Delete</button>
                         <a href="{% url 'material_detail' material_id=material.material_id %}" class="btn btn-primary">Edit</a>
                     </td>
                 </tr>

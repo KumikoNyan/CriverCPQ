@@ -581,7 +581,7 @@
                     let rawExcluded = savedBOMs[item_id].excluded_materials;
                     excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
                     
-                    additional_materials = JSON.stringify(savedBOMs[item_id].additionalMaterials);
+                    additional_materials = savedBOMs[item_id].additionalMaterials;
                 } else {
                     excluded_materials = [];
                     additional_materials=[];
@@ -590,15 +590,15 @@
                 let submit_margin = quotation_margin.val();
                 let submit_labor = quotation_labor.val();
                 
-                if (!item_quantity) {
+                if (!item_quantity || isNaN(item_quantity) || item_quantity <= 0) {
                     item_row.find(".item_quantity").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!item_height) {
+                if (!item_height || isNaN(item_height) || item_height <= 0) {
                     item_row.find(".item_height").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!item_width) {
+                if (!item_width || isNaN(item_width) || item_width <= 0) {
                     item_row.find(".item_width").addClass("is-invalid");
                     isValid = false;
                 }
@@ -718,7 +718,7 @@
                     let rawExcluded = savedBOMs[item_id].excluded_materials;
                     excluded_materials = rawExcluded ? rawExcluded.toString().split('-') : [];
 
-                    additional_materials = JSON.stringify(savedBOMs[item_id].additionalMaterials)
+                    additional_materials = savedBOMs[item_id].additionalMaterials
                 } else {
                     excluded_materials = [];
                     additional_materials = [];
@@ -727,15 +727,15 @@
                 let submit_margin = quotation_margin.val();
                 let submit_labor = quotation_labor.val();
                 
-                if (!item_quantity) {
+                if (!item_quantity || isNaN(item_quantity) || item_quantity <= 0) {
                     item_row.find(".item_quantity").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!item_height) {
+                if (!item_height || isNaN(item_height) || item_height <= 0) {
                     item_row.find(".item_height").addClass("is-invalid");
                     isValid = false;
                 }
-                if (!item_width) {
+                if (!item_width || isNaN(item_width) || item_width <= 0) {
                     item_row.find(".item_width").addClass("is-invalid");
                     isValid = false;
                 }
@@ -1003,15 +1003,15 @@
 
         $(".form-control, .form-select").removeClass("is-invalid");
 
-        if (!item_quantity) {
+        if (!item_quantity || isNaN(item_quantity) || item_quantity <= 0) {
             item_row.find(".item_quantity").addClass("is-invalid");
             isValid = false;
         }
-        if (!item_height) {
+        if (!item_height || isNaN(item_height) || item_height <= 0) {
             item_row.find(".item_height").addClass("is-invalid");
             isValid = false;
         }
-        if (!item_width) {
+        if (!item_width || isNaN(item_width) || item_width <= 0) {
             item_row.find(".item_width").addClass("is-invalid");
             isValid = false;
         }
