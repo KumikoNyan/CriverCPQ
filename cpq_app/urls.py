@@ -8,6 +8,7 @@ urlpatterns = [
     path('login/', views.login, name='login'),
     path('logout/', views.logout, name='logout'),
     path('create_account/', views.create_account, name='create_account'),
+    path('change_password/', views.change_password, name='change_password'),
     path('error/', views.access_error, name='access_error'),
     
     # temp remove after init superuser account - DO NOT ENABLE only use ONCE

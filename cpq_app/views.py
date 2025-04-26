@@ -79,6 +79,38 @@ def create_account(request):
 
     return render(request, 'cpq_app/create_account.html')
 
+def change_password(request):
+    account_level = request.session.get("account_level")
+
+    if account_level != "superuser":
+        return redirect('access_error')
+    
+    account_id = request.session.get('account_id')
+    if not account_id:
+        return redirect('login')
+
+    account = get_object_or_404(Account, account_id=account_id)
+
+    if request.method == "POST":
+        old_password = request.POST.get("old_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not check_password(old_password, account.account_password):
+            return render(request, 'cpq_app/change_password.html', {'error': 'Old password is incorrect.'})
+
+        if new_password != confirm_password:
+            return render(request, 'cpq_app/change_password.html', {'error': 'New passwords do not match.'})
+
+        if check_password(new_password, account.account_password):
+            return render(request, 'cpq_app/change_password.html', {'error': "New password can't be your old password."})
+
+        account.account_password = make_password(new_password)
+        account.save()
+        return redirect('quotation_list')
+
+    return render(request, 'cpq_app/change_password.html')  
+
 # TEMPORARY superuser seeding view DO NOT ENABLE only use ONCE
 '''def init_create_superuser(request):
     if Account.objects.filter(account_level='superuser').exists():
