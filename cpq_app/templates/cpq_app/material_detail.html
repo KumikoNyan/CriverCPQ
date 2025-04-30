@@ -23,10 +23,6 @@
             </button>
         </div>
     
-        <!-- Right-aligned search form -->
-        <form class="col-lg-auto mb-lg-0" role="search">
-            <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-        </form>
     </div>    
 </header>
 <!-- Modal -->
@@ -163,7 +159,7 @@
                         <option value="delete" hidden></option>
                         <option value="" disabled selected>Select Finish</option>
                         <option value="Clear"{% if finish.finish_name == 'Clear' %}selected{%endif%}>Clear</option>
-                        <option value="Tempered"{% if finish.finish_name == 'Temperedd' %}selected{%endif%}>Tempered</option>
+                        <option value="Tempered"{% if finish.finish_name == 'Tempered' %}selected{%endif%}>Tempered</option>
                         <option value="Laminated"{% if finish.finish_name == 'Laminated' %}selected{%endif%}>Laminated</option>
                     </select>
                 </div>

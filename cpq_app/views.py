@@ -267,7 +267,11 @@ def quotation_detail(request, quotation_id):
 
         for item in json.loads(request.POST.get('item_data')):
             product = Product.objects.get(product_id=item['product_id'])
-
+            excluded_materials = item.get('excluded_materials', [])
+            if excluded_materials:
+                excluded_materials_str = '-'.join(excluded_materials)
+            else:
+                excluded_materials_str = ''
             new_item = QuotationItem.objects.create(
                 quotation=new_quotation,
                 product=product,
@@ -278,13 +282,16 @@ def quotation_detail(request, quotation_id):
                 item_width=float(item['item_width']),
                 glass_finish=item['glass_finish'],
                 aluminum_finish=item['aluminum_finish'],
-                excluded_materials=item.get('excluded_materials', ''),
+                excluded_materials=excluded_materials_str,
                 item_label=item['item_label']
             )
 
             additional_materials = item['additional_materials']
+            print(additional_materials)
             if additional_materials:
                 for material in additional_materials:
+                    if not material['material_id'] or material['material_id'] in ['[]', '']:
+                        continue
                     material_obj = Material.objects.get(material_id=material['material_id'])
                     item_material = ItemMaterial.objects.create(item=new_item, material=material_obj, finish=material['finish'], quantity=material['quantity'])
 
@@ -292,6 +299,7 @@ def quotation_detail(request, quotation_id):
         return JsonResponse(response)
 
     quotation = Quotation.objects.get(quotation_id=quotation_id)
+    
     quotation_data = {
         'quotation_id': quotation.quotation_id,
         'customer_name': quotation.customer.customer_name,
@@ -412,6 +420,8 @@ def create_quotation(request):
             additional_materials = item['additional_materials']
             if additional_materials:
                 for material in additional_materials:
+                    if not material['material_id'] or material['material_id'] in ['[]', '']:
+                        continue
                     material_obj = Material.objects.get(material_id=material['material_id'])
                     item_material = ItemMaterial.objects.create(item=new_item, material=material_obj, finish=material['finish'], quantity=material['quantity'])
                     print(item_material)
@@ -704,6 +714,8 @@ def create_product(request):
                     scale_ratio_second = pm.get("scale_ratio_second", None)
 
                     material = get_object_or_404(Material, material_id=material_id)
+                    print(pm)
+                    print(material.material_name)
 
                     if scale_ratio_second:
                         new_pm = ProductMaterial.objects.create(product=new_product, material=material, material_quantity=material_quantity, scale_by_height=True, scale_by_width=True, scale_ratio=scale_ratio, scale_ratio_second=scale_ratio_second)
@@ -1545,38 +1557,3 @@ def feedback(request):
 
     return render(request, 'cpq_app/feedback.html')
 
-
-#DELETE THIS LATER!
-'''
-def copy_aluminum_materials(new_supplier_id, finish_cost_increase):
-    # Get the new supplier instance
-    new_supplier = Supplier.objects.get(supplier_id=new_supplier_id)
-    roosevelt = Supplier.objects.get(supplier_id=13)
-
-    # Get all aluminum materials
-    aluminum_materials = Material.objects.filter(material_type='aluminum', supplier=roosevelt)
-
-    for material in aluminum_materials:
-        # Create a copy of the aluminum material with a new supplier
-        new_material = Material(
-            material_name=material.material_name,
-            material_type=material.material_type,
-            material_unit=material.material_unit,
-            supplier=new_supplier
-        )
-        new_material.save()
-
-        # Get the material finishes for the original material
-        material_finishes = MaterialFinish.objects.filter(material=material)
-
-        for finish in material_finishes:
-            # Create a copy of the material finish with an updated finish cost
-            new_finish = MaterialFinish(
-                finish_name=finish.finish_name,
-                finish_cost=float(finish.finish_cost) * finish_cost_increase,
-                material=new_material
-            )
-            new_finish.save()
-
-    print("Aluminum materials and associated finishes copied successfully!")
-'''

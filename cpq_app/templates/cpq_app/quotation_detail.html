@@ -19,10 +19,7 @@
                 <span class="fs-4">Quotation Details</span>
             </a>
         </div>
-        <!-- Right-aligned search form -->
-        <form class="col-lg-auto mb-lg-0" role="search">
-            <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-        </form>
+
     </div>    
 </header>
 
@@ -632,9 +629,14 @@
         
             let modal = $(this).closest('.modal');
             let bom_button = modal.find('.save-bom');
-        
-            let idsRaw = bom_button.data('exclude-material-ids') || ''
-            let ids = idsRaw ? idsRaw.split('-') : [];
+            
+            let idsRaw = bom_button.data('exclude-material-ids') || '';
+            console.log(idsRaw)
+            if (Array.isArray(idsRaw)) {
+                idsRaw = '';
+            }
+            console.log(idsRaw)
+            let ids = typeof idsRaw === 'string' ? idsRaw.split('-') : idsRaw || [];
             ids.push(materialId)
         
             let updatedIds = ids.join('-');
@@ -694,6 +696,7 @@
                 labor_margin,
                 additionalMaterials
             };
+            console.log(savedBOMs[item_id])
             button.data('loaded', false)
             modal.modal('hide');
         });

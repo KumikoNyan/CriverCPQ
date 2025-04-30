@@ -21,11 +21,7 @@
                 Suppliers
             </button>
         </div>
-    
-        <!-- Right-aligned search form -->
-        <form class="col-lg-auto mb-lg-0" role="search">
-            <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-        </form>
+
     </div>    
 </header>
 <div class="modal fade" id="suppliers" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -70,7 +66,6 @@
                     <th>Supplier </th>
                     <th>Material Name</th>
                     <th>Material Type</th>
-                    <th>Material Cost</th>
                     <th></th>
                 </tr>
             </thead>
@@ -81,7 +76,6 @@
                     <td>{{material.supplier.supplier_name}}</td>
                     <td>{{material.material_name}}</td>
                     <td>{{material.material_type|capfirst}}</td>
-                    <td>{{material.material_cost}}</td>
                     <td><button type="button" class="submit-delete btn btn-danger" data-material-id="{{material.material_id}}">Delete</button>
                         <a href="{% url 'material_detail' material_id=material.material_id %}" class="btn btn-primary">Edit</a>
                     </td>

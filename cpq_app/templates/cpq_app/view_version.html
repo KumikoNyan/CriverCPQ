@@ -19,10 +19,7 @@
                 <span class="fs-4">Quotation Details</span>
             </a>
         </div>
-        <!-- Right-aligned search form -->
-        <form class="col-lg-auto mb-lg-0" role="search">
-            <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-        </form>
+
     </div>    
 </header>
 
@@ -300,7 +297,6 @@
             <div class="modal-footer">
                 <button type="button" class="download_excel_btn btn btn-success" data-filename="bill_of_materials">Download Excel</button>
                 <button type="button" class="btn btn-secondary close-bom" data-bs-dismiss="modal" data-item-id="">Close</button>
-                <button type="button" class="btn btn-primary save-bom" data-item-id="" data-exclude-material-ids="">Save changes</button>
             </div>
         </div>
     </div>
@@ -368,7 +364,7 @@
                 <div class="modal-footer">
                     <button type="button" class="download_excel_btn btn btn-success" data-filename="bill_of_materials">Download Excel</button>
                     <button type="button" class="btn btn-secondary close-bom" data-bs-dismiss="modal" data-item-id="{{forloop.counter}}">Close</button>
-                    <button type="button" class="btn btn-primary save-bom" data-item-id="{{forloop.counter}}" data-exclude-material-ids="{{item.excluded_materials}}" data-additional-materials="{{item.item_materials}}">Save changes</button>
+                    <button type="button" class="btn btn-primary save-bom" data-item-id="{{forloop.counter}}" data-exclude-material-ids="{{item.excluded_materials}}" data-additional-materials="{{item.item_materials}}" hidden>Save changes</button>
                 </div>
             </div>
         </div>
