@@ -22,7 +22,6 @@ A Configure, Price, and Quote (CPQ) system for our client Criver Glass &amp; Alu
   - ```regular```
 - Export tables to Spreadsheet
 - Streamlined UI
-  - ```Dark Mode```
   - ```Icons```
   - ```Google Fonts```
 
